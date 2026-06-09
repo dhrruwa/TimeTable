@@ -6,8 +6,9 @@ build/
 .flutter-plugins-dependencies
 pubspec.lock
 
-# Generated Isar / build_runner output
-*.g.dart
+# NOTE: generated Isar code (lib/**/*.g.dart) is intentionally committed so the
+# project builds without running build_runner. Regenerate with:
+#   dart run build_runner build --delete-conflicting-outputs
 
 # IDE
 .idea/

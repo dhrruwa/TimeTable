@@ -10,22 +10,13 @@ without refactoring.
 
 ## Setup
 
-This repo contains the full Dart source. Two generated/scaffolded pieces are
-produced by the Flutter toolchain on your machine (they're intentionally
-gitignored):
+The repo is self-contained — source, native `android/`/`ios/` projects, and the
+generated Isar code (`*.g.dart`) are all committed, so it builds straight after a
+clone:
 
 ```bash
-# 1. Generate the native platform folders (android/, ios/) without touching lib/.
-flutter create --platforms=android,ios .
-
-# 2. Fetch dependencies.
 flutter pub get
-
-# 3. Generate the Isar entity code (creates lib/data/isar_entities.g.dart).
-dart run build_runner build --delete-conflicting-outputs
-
-# 4. Run it.
-flutter run                 # Android device, or
+flutter run                 # Android device/emulator, or
 flutter run -d "iPhone 15"  # iOS simulator
 ```
 
@@ -37,6 +28,14 @@ Run the logic tests (pure Dart, no device needed):
 ```bash
 flutter test
 ```
+
+> **Changing the Isar entities?** Regenerate the persistence code with:
+> ```bash
+> dart run build_runner build --delete-conflicting-outputs
+> ```
+
+Built and tested with **Flutter 3.44.1 (stable) / Dart 3.12** — see
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
 ## Architecture
 
