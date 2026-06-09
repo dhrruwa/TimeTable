@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/timetable_models.dart';
 import '../providers/providers.dart';
-import '../theme.dart';
 import '../widgets/empty_state.dart';
 import 'edit_course_screen.dart';
 
