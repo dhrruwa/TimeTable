@@ -2,32 +2,36 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 
-import 'data/isar_timetable_repository.dart';
-import 'data/sample_data.dart';
-import 'data/timetable_repository.dart';
+import 'data/period_repository.dart';
+import 'data/sample_week.dart';
 import 'providers/providers.dart';
+import 'providers/widget_providers.dart';
 import 'screens/home_screen.dart';
 import 'theme.dart';
+import 'widgetkit/home_widget_service.dart';
+import 'widgetkit/home_widget_updater.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Open Isar in the app's documents directory.
-  final dir = await getApplicationDocumentsDirectory();
-  final isar = await IsarTimetableRepository.open(directory: dir.path);
-  final TimetableRepository repository = IsarTimetableRepository(isar);
+  // Home-screen widget bridge (App Group on iOS, etc.).
+  await HomeWidgetService.init();
 
-  // Load persisted timetable; seed sample data on first launch (empty db).
+  // Open Isar and load the unified timetable; seed sample data on first launch.
+  final dir = await getApplicationDocumentsDirectory();
+  final isar = await IsarPeriodRepository.open(directory: dir.path);
+  final repository = IsarPeriodRepository(isar);
+
   var timetable = await repository.load();
-  if (timetable.courses.isEmpty && timetable.slots.isEmpty) {
+  if (timetable == null) {
     timetable = buildSampleTimetable();
-    await repository.replaceAll(timetable);
+    await repository.save(timetable);
   }
 
   runApp(
     ProviderScope(
       overrides: [
-        repositoryProvider.overrideWithValue(repository),
+        periodRepositoryProvider.overrideWithValue(repository),
         initialTimetableProvider.overrideWithValue(timetable),
       ],
       child: const TimetableApp(),
@@ -47,7 +51,7 @@ class TimetableApp extends ConsumerWidget {
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: themeMode,
-      home: const HomeScreen(),
+      home: const HomeWidgetUpdater(child: HomeScreen()),
     );
   }
 }

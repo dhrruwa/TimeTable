@@ -65,8 +65,7 @@ class _Swatch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final check =
-        color.computeLuminance() > 0.5 ? Colors.black : Colors.white;
+    final check = color.computeLuminance() > 0.5 ? Colors.black : Colors.white;
     return InkWell(
       onTap: onTap,
       customBorder: const CircleBorder(),

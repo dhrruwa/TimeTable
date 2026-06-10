@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'courses_screen.dart';
+import 'subjects_screen.dart';
 import 'today_screen.dart';
 import 'week_screen.dart';
 
 /// Root scaffold with bottom navigation. Today is index 0 (default landing).
+///
+/// There is intentionally NO in-app "Widgets" screen: widgets exist only as
+/// native home-screen widgets (Android App Widgets + iOS WidgetKit), added from
+/// the device's own widget gallery.
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -19,7 +23,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   static const _tabs = [
     TodayScreen(),
     WeekScreen(),
-    CoursesScreen(),
+    SubjectsScreen(),
   ];
 
   @override
@@ -41,9 +45,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             label: 'Week',
           ),
           NavigationDestination(
-            icon: Icon(Icons.menu_book_outlined),
-            selectedIcon: Icon(Icons.menu_book),
-            label: 'Courses',
+            icon: Icon(Icons.palette_outlined),
+            selectedIcon: Icon(Icons.palette),
+            label: 'Subjects',
           ),
         ],
       ),

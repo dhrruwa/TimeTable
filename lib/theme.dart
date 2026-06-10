@@ -43,14 +43,12 @@ class AppTheme {
 }
 
 /// Color helpers for rendering per-course colors legibly on either theme.
-class CourseColors {
+class SubjectColors {
   /// A soft, theme-aware tint of [color] for block/card backgrounds.
   static Color surface(Color color, Brightness brightness) {
     return Color.alphaBlend(
       color.withOpacity(brightness == Brightness.dark ? 0.22 : 0.14),
-      brightness == Brightness.dark
-          ? const Color(0xFF1C1B1F)
-          : Colors.white,
+      brightness == Brightness.dark ? const Color(0xFF1C1B1F) : Colors.white,
     );
   }
 
