@@ -18,7 +18,14 @@ class IsarPeriodRepository implements PeriodRepository {
   static Future<Isar> open({required String directory}) async {
     final existing = Isar.getInstance();
     if (existing != null) return existing;
-    return Isar.open([TimetableDocEntitySchema], directory: directory);
+    return Isar.open(
+      [
+        TimetableDocEntitySchema,
+        CommunityTimetableEntitySchema,
+        AppPrefsEntitySchema,
+      ],
+      directory: directory,
+    );
   }
 
   @override

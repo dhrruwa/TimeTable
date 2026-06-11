@@ -46,6 +46,13 @@ class TimetableNotifier extends StateNotifier<Timetable> {
     await _repo.save(next);
   }
 
+  /// Replace the entire timetable (e.g. importing a shared/community one).
+  Future<void> replaceWith(Timetable timetable) => _commit(timetable);
+
+  /// Update just the identifying metadata (university/branch/semester/section).
+  Future<void> setMeta(TimetableMeta meta) =>
+      _commit(state.copyWith(meta: meta));
+
   // ---- Subjects ----------------------------------------------------------
 
   /// Next palette color not already used by a subject.

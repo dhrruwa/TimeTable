@@ -17,3 +17,40 @@ class TimetableDocEntity {
 
   TimetableDocEntity.of(this.json);
 }
+
+/// One published community timetable. Indexed by [matchKey] (university | branch
+/// | semester | section) for fast discovery lookups — the scalable shape that a
+/// real backend would index identically.
+@collection
+class CommunityTimetableEntity {
+  Id id = Isar.autoIncrement;
+
+  @Index(unique: true, replace: true)
+  late String matchKey;
+
+  late String university;
+  late String branch;
+  late String semester;
+  late String section;
+
+  String? creatorName;
+  String? creatorId;
+  bool verified = false;
+  int userCount = 1;
+  late int updatedAtMs;
+
+  /// The full timetable JSON.
+  late String json;
+
+  CommunityTimetableEntity();
+}
+
+/// Tiny single-row KV for device identity + onboarding state.
+@collection
+class AppPrefsEntity {
+  Id id = 0;
+  late String deviceId;
+  bool onboarded = false;
+
+  AppPrefsEntity();
+}

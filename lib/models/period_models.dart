@@ -139,16 +139,107 @@ class TimetableConfig {
       );
 }
 
+/// Identifying metadata for a timetable — used for sharing, community search,
+/// and discovery. All fields optional so a fresh local timetable still works.
+class TimetableMeta {
+  final String university;
+  final String branch;
+  final String semester;
+  final String section;
+  final String? creatorName;
+  final String? creatorId; // device-based id of the creator
+  final bool verified;
+  final int updatedAtMs; // last-updated epoch millis
+
+  const TimetableMeta({
+    this.university = '',
+    this.branch = '',
+    this.semester = '',
+    this.section = '',
+    this.creatorName,
+    this.creatorId,
+    this.verified = false,
+    this.updatedAtMs = 0,
+  });
+
+  bool get isComplete =>
+      university.isNotEmpty &&
+      branch.isNotEmpty &&
+      semester.isNotEmpty &&
+      section.isNotEmpty;
+
+  /// Human label, e.g. "REVA University · CSE · Sem 4 · Sec A".
+  String get label => [
+        if (university.isNotEmpty) university,
+        if (branch.isNotEmpty) branch,
+        if (semester.isNotEmpty) 'Sem $semester',
+        if (section.isNotEmpty) 'Sec $section',
+      ].join(' · ');
+
+  /// Stable key for matching identical class timetables.
+  String get matchKey => [
+        university.trim().toLowerCase(),
+        branch.trim().toLowerCase(),
+        semester.trim().toLowerCase(),
+        section.trim().toLowerCase(),
+      ].join('|');
+
+  TimetableMeta copyWith({
+    String? university,
+    String? branch,
+    String? semester,
+    String? section,
+    String? creatorName,
+    String? creatorId,
+    bool? verified,
+    int? updatedAtMs,
+  }) =>
+      TimetableMeta(
+        university: university ?? this.university,
+        branch: branch ?? this.branch,
+        semester: semester ?? this.semester,
+        section: section ?? this.section,
+        creatorName: creatorName ?? this.creatorName,
+        creatorId: creatorId ?? this.creatorId,
+        verified: verified ?? this.verified,
+        updatedAtMs: updatedAtMs ?? this.updatedAtMs,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'university': university,
+        'branch': branch,
+        'semester': semester,
+        'section': section,
+        'creatorName': creatorName,
+        'creatorId': creatorId,
+        'verified': verified,
+        'updatedAtMs': updatedAtMs,
+      };
+
+  factory TimetableMeta.fromJson(Map<String, dynamic> j) => TimetableMeta(
+        university: (j['university'] as String?) ?? '',
+        branch: (j['branch'] as String?) ?? '',
+        semester: (j['semester'] as String?) ?? '',
+        section: (j['section'] as String?) ?? '',
+        creatorName: j['creatorName'] as String?,
+        creatorId: j['creatorId'] as String?,
+        verified: (j['verified'] as bool?) ?? false,
+        updatedAtMs: (j['updatedAtMs'] as num?)?.toInt() ?? 0,
+      );
+}
+
 /// The whole editable timetable.
 class Timetable {
   final List<Subject> subjects;
   final Map<int, List<Period>> week; // 1=Mon .. 6=Sat
   final TimetableConfig config;
+  final TimetableMeta meta;
 
   const Timetable({
     this.subjects = const [],
     this.week = const {},
     this.config = const TimetableConfig(),
+    this.meta = const TimetableMeta(),
   });
 
   Subject? subjectById(String id) {
@@ -166,11 +257,13 @@ class Timetable {
     List<Subject>? subjects,
     Map<int, List<Period>>? week,
     TimetableConfig? config,
+    TimetableMeta? meta,
   }) =>
       Timetable(
         subjects: subjects ?? this.subjects,
         week: week ?? this.week,
         config: config ?? this.config,
+        meta: meta ?? this.meta,
       );
 
   Map<String, dynamic> toJson() => {
@@ -180,6 +273,7 @@ class Timetable {
               MapEntry('$day', periods.map((p) => p.toJson()).toList()),
         ),
         'config': config.toJson(),
+        'meta': meta.toJson(),
       };
 
   factory Timetable.fromJson(Map<String, dynamic> j) {
@@ -197,6 +291,8 @@ class Timetable {
       week: week,
       config: TimetableConfig.fromJson(
           (j['config'] as Map<String, dynamic>?) ?? const {}),
+      meta: TimetableMeta.fromJson(
+          (j['meta'] as Map<String, dynamic>?) ?? const {}),
     );
   }
 

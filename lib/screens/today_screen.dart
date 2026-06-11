@@ -9,6 +9,7 @@ import '../widgets/period_tile.dart';
 import '../widgets/percent_ring.dart';
 import '../widgets/time_utils.dart';
 import 'settings_screen.dart';
+import 'share_screen.dart';
 
 /// Today: the live current period with a completion %, then the full day's
 /// timeline (periods + breaks), color-coded by subject.
@@ -37,6 +38,13 @@ class TodayScreen extends ConsumerWidget {
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.ios_share),
+            tooltip: 'Share & community',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ShareScreen()),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.tune),
             tooltip: 'Schedule settings',
