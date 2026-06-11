@@ -42,13 +42,13 @@ class PeriodTile extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 10),
       child: Material(
         color: bg,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(20),
               border: isCurrent ? Border.all(color: color, width: 1.5) : null,
             ),
             padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),

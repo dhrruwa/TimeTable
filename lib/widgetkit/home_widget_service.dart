@@ -3,6 +3,7 @@ import 'dart:io' show Platform;
 import 'package:flutter/widgets.dart';
 import 'package:home_widget/home_widget.dart';
 
+import '../logic/notes_engine.dart';
 import '../logic/timetable_builder.dart';
 import '../logic/today_engine.dart';
 import '../models/period_models.dart';
@@ -99,6 +100,45 @@ class HomeWidgetService {
 
       await HomeWidget.saveWidgetData<String>('tt_day', weekdayFull);
       await HomeWidget.saveWidgetData<String>('tt_status', status.statusLine);
+
+      // Feature 4 — next-day preview + motivational note for the widget.
+      final isNextDay = status.dayOver || status.empty;
+      var nextDayLabel = '';
+      var nextDayPreview = '';
+      if (isNextDay) {
+        for (var off = 1; off <= 7; off++) {
+          final d =
+              DateTime(at.year, at.month, at.day).add(Duration(days: off));
+          final wd = d.weekday;
+          if (wd < 1 || wd > 6) continue;
+          final tl = TimetableBuilder.buildDay(
+            timetable.periodsOn(wd),
+            timetable.subjectsById,
+            timetable.config,
+          );
+          if (tl.isEmpty) continue;
+          final dl = '${_short[(wd - 1) % 7]}, ${d.day} ${_months[d.month - 1]}';
+          nextDayLabel = off == 1 ? 'Tomorrow — $dl' : 'Next — $dl';
+          final parts = <String>[];
+          var p = 0;
+          for (final e in tl) {
+            if (e.isBreak) {
+              parts.add(e.kind == EntryKind.lunch ? '🍽' : '☕');
+            } else {
+              p++;
+              parts.add('P$p ${e.title}');
+            }
+          }
+          nextDayPreview = parts.join(' · ');
+          break;
+        }
+      }
+      await HomeWidget.saveWidgetData<bool>('is_next_day_mode', isNextDay);
+      await HomeWidget.saveWidgetData<String>('next_day_label', nextDayLabel);
+      await HomeWidget.saveWidgetData<String>('next_day_preview', nextDayPreview);
+      await HomeWidget.saveWidgetData<String>(
+          'motivational_note', NotesEngine.pick(now: at, timetable: timetable));
+      await HomeWidget.saveWidgetData<String>('attendance_warning', '');
 
       // Refresh each Android size widget + the iOS widget.
       for (final name in _androidProviders) {

@@ -4,16 +4,16 @@ import '../models/period_models.dart';
 /// colors so the layout reads immediately; fully editable in-app afterwards.
 Timetable buildSampleTimetable() {
   const subjects = <Subject>[
-    Subject(id: 'sub-math', name: 'Mathematics', color: 0xFF4F46E5), // indigo
-    Subject(id: 'sub-ds', name: 'Data Structures', color: 0xFF0EA5A4), // teal
+    Subject(id: 'sub-math', name: 'Mathematics', color: 0xFF5965C8), // indigo
+    Subject(id: 'sub-ds', name: 'Data Structures', color: 0xFF3F9C8E), // teal
     Subject(
-        id: 'sub-os', name: 'Operating Systems', color: 0xFFF59E0B), // amber
-    Subject(id: 'sub-dbms', name: 'DBMS', color: 0xFFEC4899), // pink
+        id: 'sub-os', name: 'Operating Systems', color: 0xFFC9912E), // ochre
+    Subject(id: 'sub-dbms', name: 'DBMS', color: 0xFFC25E73), // rose
     Subject(
-        id: 'sub-cn', name: 'Computer Networks', color: 0xFF6366F1), // violet
-    Subject(id: 'sub-ai', name: 'Elective – AI', color: 0xFF10B981), // green
-    Subject(id: 'sub-phys', name: 'Physics', color: 0xFFEF4444), // red
-    Subject(id: 'sub-soft', name: 'Soft Skills', color: 0xFF8B5CF6), // purple
+        id: 'sub-cn', name: 'Computer Networks', color: 0xFF6E78C4), // periwinkle
+    Subject(id: 'sub-ai', name: 'Elective – AI', color: 0xFF5C9E6F), // sage
+    Subject(id: 'sub-phys', name: 'Physics', color: 0xFFC56B4E), // terracotta
+    Subject(id: 'sub-soft', name: 'Soft Skills', color: 0xFF8E6BAE), // plum
   ];
 
   int n = 0;
@@ -79,20 +79,20 @@ Timetable buildSampleTimetable() {
 
 /// A curated palette for new subjects (assigned the next unused color).
 const List<int> kSubjectPalette = [
-  0xFF4F46E5,
-  0xFF0EA5A4,
-  0xFFF59E0B,
-  0xFFEC4899,
-  0xFF6366F1,
-  0xFF10B981,
-  0xFFEF4444,
-  0xFF8B5CF6,
-  0xFF0891B2,
-  0xFF65A30D,
-  0xFFD946EF,
-  0xFFF97316,
-  0xFF14B8A6,
-  0xFF3B82F6,
-  0xFFE11D48,
-  0xFF7C3AED,
+  0xFF5965C8, // indigo
+  0xFF3F9C8E, // teal
+  0xFFC9912E, // ochre
+  0xFFC25E73, // rose
+  0xFF6E78C4, // periwinkle
+  0xFF5C9E6F, // sage
+  0xFFC56B4E, // terracotta
+  0xFF8E6BAE, // plum
+  0xFF3E84A8, // steel blue
+  0xFF7E9A4E, // olive
+  0xFFB06AA0, // mauve
+  0xFFC07A45, // clay
+  0xFF4AA59A, // sea
+  0xFF5B86C9, // cornflower
+  0xFFB85C5C, // brick
+  0xFF7C6BC0, // violet
 ];

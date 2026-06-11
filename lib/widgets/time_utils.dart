@@ -37,6 +37,20 @@ class TimeUtils {
   static String dayName(int dayOfWeek) => _dayFull[(dayOfWeek - 1) % 7];
   static String dayShort(int dayOfWeek) => _dayShort[(dayOfWeek - 1) % 7];
 
+  /// Midnight of the Monday in [date]'s week.
+  static DateTime mondayOf(DateTime date) {
+    final d = DateTime(date.year, date.month, date.day);
+    return d.subtract(Duration(days: d.weekday - 1));
+  }
+
+  /// "9 Jun" style short date.
+  static String shortDate(DateTime d) => '${d.day} ${_monthsShort[d.month - 1]}';
+
+  static const _monthsShort = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+
   /// Human "1h 20m" / "45m" duration label.
   static String durationLabel(int minutes) {
     final h = minutes ~/ 60;

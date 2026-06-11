@@ -7,8 +7,14 @@ import '../providers/widget_providers.dart';
 import '../widgets/color_picker.dart';
 import '../widgets/time_utils.dart';
 
+/// Built-in subject for an empty/"free" slot. Adding one keeps the following
+/// periods at their correct times (e.g. leave P1 free so the day starts at P2).
+const Subject kFreeSubject =
+    Subject(id: 'free', name: 'Free Period', color: 0xFF98A0AB);
+
 /// Edit one weekday's ordered list of periods. The order determines the times
-/// (computed live), so reordering is the same as rescheduling.
+/// (computed live), so reordering is the same as rescheduling. Changes are
+/// saved automatically.
 class EditDayScreen extends ConsumerWidget {
   final int weekday;
   const EditDayScreen({super.key, required this.weekday});
@@ -23,7 +29,16 @@ class EditDayScreen extends ConsumerWidget {
     final classEntries = timeline.where((e) => e.isClass).toList();
 
     return Scaffold(
-      appBar: AppBar(title: Text(TimeUtils.dayName(weekday))),
+      appBar: AppBar(
+        title: Text(TimeUtils.dayName(weekday)),
+        actions: [
+          TextButton.icon(
+            onPressed: () => Navigator.of(context).maybePop(),
+            icon: const Icon(Icons.check, size: 18),
+            label: const Text('Done'),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _addOrEdit(context, ref),
         icon: const Icon(Icons.add),
@@ -218,6 +233,19 @@ class _PeriodSheetState extends ConsumerState<_PeriodSheet> {
   void _save() {
     if (_subjectId == null) return;
     final notifier = ref.read(timetableProvider.notifier);
+
+    // Free period: ensure the built-in "Free" subject exists, then add a plain
+    // placeholder slot (no room/teacher/lab) that keeps later times correct.
+    if (_subjectId == 'free') {
+      final exists =
+          ref.read(timetableProvider).subjects.any((s) => s.id == 'free');
+      if (!exists) notifier.upsertSubject(kFreeSubject);
+      final freePeriod =
+          Period(id: widget.existing?.id ?? notifier.newId(), subjectId: 'free');
+      Navigator.of(context).pop(freePeriod);
+      return;
+    }
+
     final room = _room.text.trim();
     final teacher = _teacher.text.trim();
     final period = (widget.existing ??
@@ -233,8 +261,10 @@ class _PeriodSheetState extends ConsumerState<_PeriodSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final subjects = [...ref.watch(timetableProvider).subjects]
-      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    final subjects = [
+      ...ref.watch(timetableProvider).subjects.where((s) => s.id != 'free')
+    ]..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    final isFree = _subjectId == 'free';
     final bottom = MediaQuery.of(context).viewInsets.bottom;
 
     return Padding(
@@ -250,7 +280,7 @@ class _PeriodSheetState extends ConsumerState<_PeriodSheet> {
             children: [
               Expanded(
                 child: DropdownButtonFormField<String>(
-                  value: subjects.any((s) => s.id == _subjectId)
+                  value: (isFree || subjects.any((s) => s.id == _subjectId))
                       ? _subjectId
                       : null,
                   isExpanded: true,
@@ -259,6 +289,17 @@ class _PeriodSheetState extends ConsumerState<_PeriodSheet> {
                     prefixIcon: Icon(Icons.menu_book_outlined),
                   ),
                   items: [
+                    DropdownMenuItem(
+                      value: 'free',
+                      child: Row(
+                        children: const [
+                          Icon(Icons.block_flipped,
+                              size: 16, color: Color(0xFF98A0AB)),
+                          SizedBox(width: 8),
+                          Text('Free period (no class)'),
+                        ],
+                      ),
+                    ),
                     for (final s in subjects)
                       DropdownMenuItem(
                         value: s.id,
@@ -285,29 +326,41 @@ class _PeriodSheetState extends ConsumerState<_PeriodSheet> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _room,
-            textCapitalization: TextCapitalization.characters,
-            decoration: const InputDecoration(
-                labelText: 'Room (optional)',
-                prefixIcon: Icon(Icons.place_outlined)),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _teacher,
-            textCapitalization: TextCapitalization.words,
-            decoration: const InputDecoration(
-                labelText: 'Teacher (optional)',
-                prefixIcon: Icon(Icons.person_outline)),
-          ),
-          const SizedBox(height: 8),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Lab (2-hour block)'),
-            value: _isLab,
-            onChanged: (v) => setState(() => _isLab = v),
-          ),
+          if (isFree)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Text(
+                'A free slot keeps the following periods at their correct '
+                'times — e.g. leave Period 1 free so the day starts at Period 2.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant),
+              ),
+            )
+          else ...[
+            const SizedBox(height: 12),
+            TextField(
+              controller: _room,
+              textCapitalization: TextCapitalization.characters,
+              decoration: const InputDecoration(
+                  labelText: 'Room (optional)',
+                  prefixIcon: Icon(Icons.place_outlined)),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _teacher,
+              textCapitalization: TextCapitalization.words,
+              decoration: const InputDecoration(
+                  labelText: 'Teacher (optional)',
+                  prefixIcon: Icon(Icons.person_outline)),
+            ),
+            const SizedBox(height: 8),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Lab (2-hour block)'),
+              value: _isLab,
+              onChanged: (v) => setState(() => _isLab = v),
+            ),
+          ],
           const SizedBox(height: 8),
           SizedBox(
             width: double.infinity,
