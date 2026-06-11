@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Class Timetable — Shared</title>
+<style>
+  :root { --bg:#0e1013; --card:#171a21; --line:#262b34; --fg:#f3f5f8; --muted:#9aa3af; --accent:#6366f1; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+         background:var(--bg); color:var(--fg); min-height:100vh; display:flex; justify-content:center; }
+  .wrap { width:100%; max-width:520px; padding:24px 18px 48px; }
+  .brand { display:flex; align-items:center; gap:10px; margin:8px 0 20px; }
+  .brand .dot { width:30px;height:30px;border-radius:8px;
+    background:linear-gradient(135deg,#6366f1,#0ea5a4); }
+  .brand b { font-size:18px; }
+  h1 { font-size:22px; margin:0 0 4px; }
+  .sub { color:var(--muted); font-size:14px; margin:0 0 20px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:18px; margin-bottom:16px; }
+  .row { display:flex; gap:10px; font-size:14px; padding:6px 0; }
+  .row .k { color:var(--muted); width:92px; flex:none; }
+  .row .v { font-weight:600; }
+  .subj { display:flex; align-items:center; gap:10px; padding:7px 0; }
+  .swatch { width:11px;height:11px;border-radius:50%; flex:none; }
+  .subj .meta { color:var(--muted); font-size:12.5px; }
+  .btn { display:block; width:100%; text-align:center; text-decoration:none; padding:15px;
+    border-radius:14px; font-weight:600; font-size:16px; margin-top:10px; }
+  .btn.primary { background:var(--accent); color:#fff; }
+  .btn.ghost { background:transparent; color:var(--fg); border:1px solid var(--line); }
+  .muted { color:var(--muted); font-size:13px; text-align:center; margin-top:18px; line-height:1.5; }
+  .pop { color:var(--muted); font-size:13px; margin-top:10px; }
+  code { color:var(--muted); font-size:11px; word-break:break-all; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand"><div class="dot"></div><b>Timetable</b></div>
+  <h1 id="title">Shared class timetable</h1>
+  <p class="sub" id="subtitle">Open this in the Timetable app to import it in one tap.</p>
+
+  <div id="preview"></div>
+
+  <a class="btn primary" id="openBtn" href="#">Open in App</a>
+  <a class="btn ghost" id="getBtn" href="https://github.com/dhrruwa/TimeTable">Don't have the app? Get it</a>
+
+  <p class="muted" id="note">
+    If the app doesn't open automatically, tap <b>Open in App</b> above.
+  </p>
+</div>
+
+<script>
+(function () {
+  // The whole timetable is carried in the URL fragment as #d=<gzip+base64url>.
+  var hash = location.hash || "";
+  var m = hash.match(/[#&]d=([^&]+)/);
+  var payload = m ? m[1] : null;
+
+  var openBtn = document.getElementById("openBtn");
+  var preview = document.getElementById("preview");
+
+  if (!payload) {
+    document.getElementById("subtitle").textContent =
+      "This page opens shared class timetables. Open a shared link to import one.";
+    openBtn.style.display = "none";
+    return;
+  }
+
+  var appUrl = "classtimetable://import#d=" + payload;
+  openBtn.setAttribute("href", appUrl);
+
+  // Try to open the app automatically.
+  setTimeout(function () { window.location = appUrl; }, 600);
+
+  // Decode + preview in the browser (proves the link carries all the data).
+  function b64urlToBytes(s) {
+    s = s.replace(/-/g, "+").replace(/_/g, "/");
+    while (s.length % 4) s += "=";
+    var bin = atob(s), out = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+  async function decode() {
+    try {
+      var bytes = b64urlToBytes(payload);
+      var ds = new DecompressionStream("gzip");
+      var resp = new Response(new Blob([bytes]).stream().pipeThrough(ds));
+      var tt = JSON.parse(await resp.text());
+      render(tt);
+    } catch (e) {
+      preview.innerHTML =
+        '<div class="card"><b>Timetable ready to import</b>' +
+        '<p class="pop">Open it in the app to see the full week.</p></div>';
+    }
+  }
+  function esc(s){ return (s||"").replace(/[&<>]/g, function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];}); }
+  function argb(n){ var h=(n>>>0).toString(16).padStart(8,"0"); return "#"+h.slice(2); }
+  function render(tt) {
+    var meta = tt.meta || {};
+    var rows = [
+      ["University", meta.university], ["Branch", meta.branch],
+      ["Semester", meta.semester], ["Section", meta.section],
+    ].filter(function(r){ return r[1]; });
+    var metaHtml = rows.map(function(r){
+      return '<div class="row"><div class="k">'+r[0]+'</div><div class="v">'+esc(r[1])+'</div></div>';
+    }).join("");
+    if (meta.label || rows.length) {
+      document.getElementById("title").textContent =
+        [meta.branch, meta.semester ? "Sem "+meta.semester : "", meta.section ? "Sec "+meta.section : ""]
+        .filter(Boolean).join(" · ") || "Shared class timetable";
+    }
+    var subjects = (tt.subjects || []);
+    var subjHtml = subjects.map(function(s){
+      return '<div class="subj"><span class="swatch" style="background:'+argb(s.color)+'"></span>'+
+             '<span>'+esc(s.name)+'</span></div>';
+    }).join("");
+    var pop = meta.creatorName ? '<div class="pop">Created by '+esc(meta.creatorName)+
+              (meta.verified ? " · verified" : "")+'</div>' : "";
+    preview.innerHTML =
+      (metaHtml ? '<div class="card">'+metaHtml+pop+'</div>' : "") +
+      (subjHtml ? '<div class="card"><b>Subjects</b>'+subjHtml+'</div>' : "");
+  }
+  decode();
+})();
+</script>
+</body>
+</html>
