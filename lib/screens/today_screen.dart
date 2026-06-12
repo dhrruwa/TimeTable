@@ -7,6 +7,7 @@ import '../logic/today_engine.dart';
 import '../models/period_models.dart';
 import '../providers/providers.dart';
 import '../providers/widget_providers.dart';
+import '../widgets/dhrruwa_footer.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/note_card.dart';
 import '../widgets/period_tile.dart';
@@ -87,6 +88,7 @@ class TodayScreen extends ConsumerWidget {
                         ? status.completion
                         : null,
                   ),
+                const DhrruwaFooter(),
               ],
             ),
     );
@@ -189,6 +191,7 @@ class _NextDayView extends StatelessWidget {
         for (final e in n.tl) PeriodTile(entry: e),
         const SizedBox(height: 16),
         NoteCard(note: restNote, icon: Icons.bedtime_outlined),
+        const DhrruwaFooter(),
       ],
     );
   }

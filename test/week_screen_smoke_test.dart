@@ -46,5 +46,13 @@ void main() {
 
     // The grid actually rendered some classes.
     expect(find.text('Physics'), findsWidgets);
+
+    final viewer =
+        tester.widget<InteractiveViewer>(find.byType(InteractiveViewer));
+    expect(viewer.panEnabled, isTrue);
+    expect(viewer.scaleEnabled, isTrue);
+    expect(viewer.minScale, 0.45);
+    expect(viewer.maxScale, 3);
+    expect(viewer.trackpadScrollCausesScale, isTrue);
   });
 }

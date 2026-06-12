@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/period_models.dart';
 import '../providers/providers.dart';
 import '../providers/widget_providers.dart';
+import '../widgets/dhrruwa_footer.dart';
 import '../widgets/time_utils.dart';
 
 /// Configure the bell schedule (day start, durations, break positions) and the
@@ -134,6 +135,7 @@ class SettingsScreen extends ConsumerWidget {
                   m ?? ThemeMode.system,
               title: Text(entry.value),
             ),
+          const DhrruwaFooter(),
         ],
       ),
     );

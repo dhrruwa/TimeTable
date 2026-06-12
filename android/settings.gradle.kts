@@ -20,7 +20,7 @@ pluginManagement {
 plugins {
     id("dev.flutter.flutter-plugin-loader") version "1.0.0"
     // Pinned to a stable AGP 8.x: AGP 9 is too new for isar_flutter_libs 3.1.0.
-    id("com.android.application") version "8.7.3" apply false
+    id("com.android.application") version "8.9.1" apply false
     id("org.jetbrains.kotlin.android") version "2.1.20" apply false
 }
 

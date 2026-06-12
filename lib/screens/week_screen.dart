@@ -351,6 +351,10 @@ class WeekScreen extends ConsumerWidget {
       }
     }
 
+    final breakCount = columns.where((c) => c.isBreak).length;
+    final totalW = _dayColW + classCount * _cellW + breakCount * _breakW;
+    const totalH = _headerH + (_weeksToShow * 6) * _cellH;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Week'),
@@ -377,17 +381,21 @@ class WeekScreen extends ConsumerWidget {
             ),
             child: topBar,
           ),
+          // A single canvas keeps pinch-zoom and two-dimensional panning from
+          // competing with separate horizontal and vertical scroll views.
           Expanded(
             child: InteractiveViewer(
               constrained: false,
               panEnabled: true,
               scaleEnabled: true,
-              minScale: 0.5,
-              maxScale: 2.5,
-              boundaryMargin: const EdgeInsets.symmetric(
-                  horizontal: 24, vertical: 80),
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 80),
+              minScale: 0.45,
+              maxScale: 3,
+              boundaryMargin: const EdgeInsets.all(80),
+              trackpadScrollCausesScale: true,
+              scaleFactor: 160,
+              child: SizedBox(
+                width: totalW,
+                height: totalH + 60,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,

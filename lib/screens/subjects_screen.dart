@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/period_models.dart';
 import '../providers/widget_providers.dart';
+import '../widgets/dhrruwa_footer.dart';
 import '../widgets/empty_state.dart';
 import 'edit_day_screen.dart' show SubjectSheet;
 
@@ -36,9 +37,10 @@ class SubjectsScreen extends ConsumerWidget {
             )
           : ListView.separated(
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 96),
-              itemCount: subjects.length,
+              itemCount: subjects.length + 1,
               separatorBuilder: (_, __) => const SizedBox(height: 8),
               itemBuilder: (context, i) {
+                if (i == subjects.length) return const DhrruwaFooter();
                 final s = subjects[i];
                 final count = ref
                     .read(timetableProvider.notifier)

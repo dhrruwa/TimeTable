@@ -5,6 +5,7 @@ import '../data/community_repository.dart';
 import '../models/period_models.dart';
 import '../providers/community_providers.dart';
 import '../providers/widget_providers.dart';
+import '../widgets/dhrruwa_footer.dart';
 import '../widgets/timetable_summary.dart';
 
 /// Shown when a shared link (or a community pick) is opened: previews the
@@ -69,6 +70,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
           Text('Subjects', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 12),
           SubjectFacultyList(timetable: incoming),
+          const DhrruwaFooter(),
         ],
       ),
       bottomNavigationBar: SafeArea(

@@ -3,6 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../widgets/dhrruwa_footer.dart';
 
 import '../data/community_repository.dart';
 import '../logic/share_codec.dart';
@@ -322,9 +325,42 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
               );
             },
           ),
+
+          const Divider(height: 32),
+
+          // --- Support & feedback ---------------------------------------
+          Text('Support', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: _sendFeedback,
+            icon: const Icon(Icons.feedback_outlined),
+            label: const Text('Send feedback / report a problem'),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Tell us what to add or change — we read every message.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant),
+          ),
+
+          const DhrruwaFooter(),
         ],
       ),
     );
+  }
+
+  Future<void> _sendFeedback() async {
+    final uri = Uri(
+      scheme: 'mailto',
+      path: 'support@dhrruwa.com',
+      query: 'subject=${Uri.encodeComponent('Timetable App Feedback')}'
+          '&body=${Uri.encodeComponent('\n\n— What would you like to change or add?')}',
+    );
+    try {
+      await launchUrl(uri);
+    } catch (_) {
+      _toast('No email app found');
+    }
   }
 
   Widget _field(TextEditingController c, String label) => Padding(
