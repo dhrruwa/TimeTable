@@ -305,10 +305,6 @@ export default function AdminDashboard() {
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>
-
-          <div className="pt-2 border-t border-slate-100 text-[10px] text-slate-400 leading-normal text-center font-medium">
-            *Default passcode is <code className="text-slate-600 bg-slate-50 px-1 py-0.5 rounded">admin123</code>. Override this by defining the <code className="text-slate-600 bg-slate-50 px-1 py-0.5 rounded">ADMIN_PASSWORD</code> env variable.
-          </div>
         </div>
       </div>
     );
