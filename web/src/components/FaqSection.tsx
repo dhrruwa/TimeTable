@@ -2,19 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HelpCircle, ChevronDown } from 'lucide-react';
-
-const courses = [
-  'Computer Science', 'Data Science', 'Electronics & Comm', 'Information Science',
-  'Mechanical Eng', 'Civil Eng', 'Biotechnology', 'Electrical & Elec', 'B.Tech',
-  'M.Tech', 'B.Sc Physics', 'B.Sc Chemistry', 'MBA Finance', 'BBA Marketing'
-];
-
-const campuses = [
-  'REVA University', 'PES University', 'RV College of Eng', 'BMS College of Eng',
-  'Ramaiah Inst of Tech', 'MIT Manipal', 'IIT Madras', 'BITS Pilani', 'VIT Vellore',
-  'DTU Delhi', 'SRM University', 'NIT Trichy'
-];
+import { ChevronDown, LifeBuoy } from 'lucide-react';
 
 const faqs = [
   {
@@ -42,139 +30,62 @@ const faqs = [
 export default function FaqSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
-  const toggleAccordion = (idx: number) => {
-    setOpenIndex(openIndex === idx ? null : idx);
-  };
+  const toggle = (idx: number) => setOpenIndex(openIndex === idx ? null : idx);
 
   return (
     <section id="faq" className="relative py-16 bg-white overflow-hidden border-t border-slate-100">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-left">
-        
+
         {/* Section Header */}
         <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mb-8">
-          Explore options in ClassSync
+          Frequently asked questions
         </h2>
 
-        {/* Accordions List (Zomato Explorer Style) */}
+        {/* FAQ Accordions */}
         <div className="space-y-4">
-          
-          {/* 1. Popular Courses Accordion */}
-          <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-2xs">
-            <button
-              onClick={() => toggleAccordion(0)}
-              className="w-full p-5 text-left flex justify-between items-center font-bold text-slate-800 hover:text-slate-900 cursor-pointer bg-white"
-            >
-              <span className="text-base sm:text-lg">Popular courses & branches supported</span>
-              <motion.div
-                animate={{ rotate: openIndex === 0 ? 180 : 0 }}
-                className="text-slate-500"
+          {faqs.map((faq, idx) => (
+            <div key={idx} className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-2xs">
+              <button
+                onClick={() => toggle(idx)}
+                className="w-full p-5 text-left flex justify-between items-center font-bold text-slate-800 hover:text-slate-900 cursor-pointer bg-white"
               >
-                <ChevronDown className="w-5 h-5" />
-              </motion.div>
-            </button>
-
-            <AnimatePresence initial={false}>
-              {openIndex === 0 && (
+                <span className="text-base sm:text-lg">{faq.q}</span>
                 <motion.div
-                  initial={{ height: 0 }}
-                  animate={{ height: 'auto' }}
-                  exit={{ height: 0 }}
-                  className="overflow-hidden"
+                  animate={{ rotate: openIndex === idx ? 180 : 0 }}
+                  className="text-slate-500 shrink-0 ml-4"
                 >
-                  <div className="p-5 pt-0 text-sm text-slate-500 leading-relaxed font-semibold">
-                    <div className="flex flex-wrap gap-x-2 gap-y-1.5 items-center">
-                      {courses.map((c, i) => (
-                        <React.Fragment key={i}>
-                          <span className="hover:text-sky-600 cursor-pointer">{c}</span>
-                          {i < courses.length - 1 && <span className="w-1 h-1 rounded-full bg-slate-300 mx-1"></span>}
-                        </React.Fragment>
-                      ))}
-                    </div>
-                  </div>
+                  <ChevronDown className="w-5 h-5" />
                 </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+              </button>
 
-          {/* 2. Active Campuses Accordion */}
-          <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-2xs">
-            <button
-              onClick={() => toggleAccordion(1)}
-              className="w-full p-5 text-left flex justify-between items-center font-bold text-slate-800 hover:text-slate-900 cursor-pointer bg-white"
-            >
-              <span className="text-base sm:text-lg">Campuses using ClassSync</span>
-              <motion.div
-                animate={{ rotate: openIndex === 1 ? 180 : 0 }}
-                className="text-slate-500"
-              >
-                <ChevronDown className="w-5 h-5" />
-              </motion.div>
-            </button>
+              <AnimatePresence initial={false}>
+                {openIndex === idx && (
+                  <motion.div
+                    initial={{ height: 0 }}
+                    animate={{ height: 'auto' }}
+                    exit={{ height: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <p className="p-5 pt-0 text-sm text-slate-600 leading-relaxed font-semibold">
+                      {faq.a}
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          ))}
+        </div>
 
-            <AnimatePresence initial={false}>
-              {openIndex === 1 && (
-                <motion.div
-                  initial={{ height: 0 }}
-                  animate={{ height: 'auto' }}
-                  exit={{ height: 0 }}
-                  className="overflow-hidden"
-                >
-                  <div className="p-5 pt-0 text-sm text-slate-500 leading-relaxed font-semibold">
-                    <div className="flex flex-wrap gap-x-2 gap-y-1.5 items-center">
-                      {campuses.map((c, i) => (
-                        <React.Fragment key={i}>
-                          <span className="hover:text-sky-600 cursor-pointer">{c}</span>
-                          {i < campuses.length - 1 && <span className="w-1 h-1 rounded-full bg-slate-300 mx-1"></span>}
-                        </React.Fragment>
-                      ))}
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* 3. FAQs Accordion */}
-          <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-2xs">
-            <button
-              onClick={() => toggleAccordion(2)}
-              className="w-full p-5 text-left flex justify-between items-center font-bold text-slate-800 hover:text-slate-900 cursor-pointer bg-white"
-            >
-              <span className="text-base sm:text-lg">Frequently asked questions</span>
-              <motion.div
-                animate={{ rotate: openIndex === 2 ? 180 : 0 }}
-                className="text-slate-500"
-              >
-                <ChevronDown className="w-5 h-5" />
-              </motion.div>
-            </button>
-
-            <AnimatePresence initial={false}>
-              {openIndex === 2 && (
-                <motion.div
-                  initial={{ height: 0 }}
-                  animate={{ height: 'auto' }}
-                  exit={{ height: 0 }}
-                  className="overflow-hidden bg-slate-50/30"
-                >
-                  <div className="p-5 pt-0 space-y-5 border-t border-slate-100">
-                    {faqs.map((faq, i) => (
-                      <div key={i} className="space-y-1 pt-4 first:pt-2">
-                        <h4 className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
-                          <HelpCircle className="w-4 h-4 text-sky-500 shrink-0" />
-                          {faq.q}
-                        </h4>
-                        <p className="text-xs text-slate-600 pl-5.5 leading-relaxed font-semibold">
-                          {faq.a}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
+        {/* Support button */}
+        <div className="mt-10 flex flex-col items-center text-center gap-3">
+          <p className="text-slate-600 font-semibold">Still have a question?</p>
+          <a
+            href="mailto:support@dhrruwa.com?subject=ClassSync%20Support"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-sky-500/25 active:scale-95 cursor-pointer"
+          >
+            <LifeBuoy className="w-5 h-5" />
+            Contact Support
+          </a>
         </div>
 
       </div>
