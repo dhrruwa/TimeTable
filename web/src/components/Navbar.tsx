@@ -31,7 +31,9 @@ export default function Navbar() {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-2 cursor-pointer relative md:left-[10%] left-0" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <img src="/logo.png" alt="ClassSync Logo" className="h-[60px] w-auto object-contain" />
+            {/* Logo is 20% larger (72px) but a negative margin keeps its layout
+                footprint at 60px, so the navbar height is unchanged. */}
+            <img src="/logo.png" alt="ClassSync Logo" className="h-[72px] w-auto object-contain my-[-6px]" />
           </div>
 
           {/* Desktop Nav Links */}
