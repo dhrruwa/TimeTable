@@ -30,10 +30,10 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center gap-2 cursor-pointer relative md:left-[10%] left-0" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+          <div className="flex items-center gap-2 cursor-pointer relative md:left-[2%] left-0" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
             {/* Logo is 20% larger (72px) but a negative margin keeps its layout
                 footprint at 60px, so the navbar height is unchanged. */}
-            <img src="/logo.png" alt="ClassSync Logo" className="h-[72px] w-auto object-contain my-[-6px]" />
+            <img src="/logo.png" alt="ClassSync Logo" className="h-[100px] w-auto object-contain my-[-40px]" />
           </div>
 
           {/* Desktop Nav Links */}
@@ -49,9 +49,6 @@ export default function Navbar() {
             </button>
             <button onClick={() => scrollToSection('showcase')} className="text-sm text-slate-600 hover:text-sky-600 transition-colors font-semibold cursor-pointer">
               Showcase
-            </button>
-            <button onClick={() => scrollToSection('stats')} className="text-sm text-slate-600 hover:text-sky-600 transition-colors font-semibold cursor-pointer">
-              Stats
             </button>
             <button onClick={() => scrollToSection('faq')} className="text-sm text-slate-600 hover:text-sky-600 transition-colors font-semibold cursor-pointer">
               FAQ
@@ -96,9 +93,6 @@ export default function Navbar() {
             </button>
             <button onClick={() => scrollToSection('showcase')} className="text-left py-2 text-base text-slate-600 hover:text-sky-600 transition-colors font-semibold">
               Showcase
-            </button>
-            <button onClick={() => scrollToSection('stats')} className="text-left py-2 text-base text-slate-600 hover:text-sky-600 transition-colors font-semibold">
-              Stats
             </button>
             <button onClick={() => scrollToSection('faq')} className="text-left py-2 text-base text-slate-600 hover:text-sky-600 transition-colors font-semibold">
               FAQ

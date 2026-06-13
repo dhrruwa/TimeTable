@@ -25,6 +25,7 @@ export async function GET() {
 
     let dbDownloadsCount = 0;
     let dbSubscribers: any[] = [];
+    let dbSupportMessages: any[] = [];
     let isConnected = false;
 
     if (isConfigured) {
@@ -51,6 +52,17 @@ export async function GET() {
 
         if (!subsErr && subsData) {
           dbSubscribers = subsData;
+        }
+
+        // Query recent support messages
+        const { data: supportData, error: supportErr } = await supabaseAdmin
+          .from('support_messages')
+          .select('*')
+          .order('timestamp', { ascending: false })
+          .limit(50);
+
+        if (!supportErr && supportData) {
+          dbSupportMessages = supportData;
         }
 
         isConnected = true;
@@ -105,6 +117,21 @@ export async function GET() {
           { id: 5, name: 'Alex Johnson', email: 'alexj@standford.edu', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 30).toISOString() },
         ];
 
+    // Generate recent support messages list
+    const supportMessages = dbSupportMessages.length > 0 
+      ? dbSupportMessages.map(msg => ({
+          id: msg.id,
+          name: msg.name,
+          email: msg.email,
+          message: msg.message,
+          timestamp: msg.timestamp,
+        }))
+      : [
+          { id: 1, name: 'Dhruva', email: 'dhruva@college.edu', message: 'Hey! Is there a light mode theme option coming in the next release? Love the dark theme, but light mode would be great for outdoors.', timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString() },
+          { id: 2, name: 'Alice Smith', email: 'alice.s@university.edu', message: 'I tried importing my friends timetable sync code but it failed with error 404. Can you check if the sync servers are up?', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString() },
+          { id: 3, name: 'Rohan Mehta', email: 'rohanm@techinst.edu', message: 'Amazing work on the attendance calculator! It has saved me from falling below 75% so many times already.', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString() },
+        ];
+
     return NextResponse.json({
       success: true,
       stats: {
@@ -114,6 +141,7 @@ export async function GET() {
         classesTracked,
       },
       subscribers,
+      supportMessages,
       chartData,
       isSupabaseConnected: isConnected,
     });

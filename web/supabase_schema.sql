@@ -39,3 +39,23 @@ CREATE POLICY "Restrict public select on newsletter_subscribers"
 -- Note: Next.js API endpoints / Server Actions that query stats/subscribers 
 -- should bypass RLS by using the Service Role Key (SUPABASE_SERVICE_ROLE_KEY)
 -- on the server side to securely view data without exposing it to the public client.
+
+-- 7. Create support_messages table
+CREATE TABLE IF NOT EXISTS support_messages (
+  id BIGSERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  message TEXT NOT NULL,
+  timestamp TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 8. Enable Row Level Security (RLS) on support_messages
+ALTER TABLE support_messages ENABLE ROW LEVEL SECURITY;
+
+-- 9. Enable public inserts (for the contact support form)
+CREATE POLICY "Allow public insert to support_messages" 
+  ON support_messages FOR INSERT TO anon WITH CHECK (true);
+
+-- 10. Restrict public read queries
+CREATE POLICY "Restrict public select on support_messages"
+  ON support_messages FOR SELECT TO anon USING (false);

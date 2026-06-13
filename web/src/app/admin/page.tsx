@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Calendar, Lock, LogOut, ArrowRight, Download, Users, RefreshCw, AlertTriangle, ShieldCheck, Mail, ArrowLeft, Database } from 'lucide-react';
+import { Calendar, Lock, LogOut, ArrowRight, Download, Users, RefreshCw, AlertTriangle, ShieldCheck, Mail, ArrowLeft, Database, MessageSquare } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface Stats {
   totalDownloads: number;
@@ -17,6 +18,14 @@ interface Subscriber {
   timestamp: string;
 }
 
+interface SupportMessage {
+  id: string | number;
+  name: string;
+  email: string;
+  message: string;
+  timestamp: string;
+}
+
 interface ChartDataPoint {
   date: string;
   downloads: number;
@@ -27,6 +36,7 @@ export default function AdminDashboard() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loginError, setLoginError] = useState('');
   const [loggingIn, setLoggingIn] = useState(false);
+  const [activeTab, setActiveTab] = useState<'subscribers' | 'support'>('subscribers');
 
   const [stats, setStats] = useState<Stats>({
     totalDownloads: 0,
@@ -35,6 +45,7 @@ export default function AdminDashboard() {
     classesTracked: 0,
   });
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
+  const [supportMessages, setSupportMessages] = useState<SupportMessage[]>([]);
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
@@ -48,6 +59,7 @@ export default function AdminDashboard() {
           const data = await res.json();
           setStats(data.stats);
           setSubscribers(data.subscribers);
+          setSupportMessages(data.supportMessages || []);
           setChartData(data.chartData);
           setIsConnected(data.isSupabaseConnected);
           setIsLoggedIn(true);
@@ -83,6 +95,7 @@ export default function AdminDashboard() {
           const data = await statsRes.json();
           setStats(data.stats);
           setSubscribers(data.subscribers);
+          setSupportMessages(data.supportMessages || []);
           setChartData(data.chartData);
           setIsConnected(data.isSupabaseConnected);
           setIsLoggedIn(true);
@@ -104,6 +117,7 @@ export default function AdminDashboard() {
     document.cookie = 'classsync_admin_session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
     setIsLoggedIn(false);
     setSubscribers([]);
+    setSupportMessages([]);
     setChartData([]);
   };
 
@@ -115,6 +129,7 @@ export default function AdminDashboard() {
         const data = await res.json();
         setStats(data.stats);
         setSubscribers(data.subscribers);
+        setSupportMessages(data.supportMessages || []);
         setChartData(data.chartData);
         setIsConnected(data.isSupabaseConnected);
       }
@@ -439,37 +454,93 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* Right: Recent Subscribers Table */}
+          {/* Right: Tabbed Subscribers & Support Messages Table */}
           <div className="lg:col-span-5 glass p-6 rounded-2xl border border-slate-200 bg-white shadow-2xs flex flex-col gap-6 text-left">
-            <div className="flex justify-between items-center">
-              <div>
-                <h3 className="text-base font-extrabold text-slate-900">Recent Subscribers</h3>
-                <p className="text-xs text-slate-500 mt-0.5">Latest signups for app store release keys.</p>
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setActiveTab('subscribers')}
+                  className={`text-sm font-extrabold pb-1.5 transition-colors relative cursor-pointer ${
+                    activeTab === 'subscribers' ? 'text-slate-900' : 'text-slate-400 hover:text-slate-600'
+                  }`}
+                >
+                  Subscribers ({subscribers.length})
+                  {activeTab === 'subscribers' && (
+                    <motion.div layoutId="activeTabUnderline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-sky-500" />
+                  )}
+                </button>
+                <button
+                  onClick={() => setActiveTab('support')}
+                  className={`text-sm font-extrabold pb-1.5 transition-colors relative cursor-pointer ${
+                    activeTab === 'support' ? 'text-slate-900' : 'text-slate-400 hover:text-slate-600'
+                  }`}
+                >
+                  Support Inbox ({supportMessages.length})
+                  {activeTab === 'support' && (
+                    <motion.div layoutId="activeTabUnderline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-sky-500" />
+                  )}
+                </button>
               </div>
-              <Mail className="w-4 h-4 text-sky-500" />
+              <div className="p-1.5 rounded-lg bg-slate-50 border border-slate-100 text-sky-500">
+                {activeTab === 'subscribers' ? <Mail className="w-4 h-4" /> : <MessageSquare className="w-4 h-4" />}
+              </div>
             </div>
 
             {/* List */}
-            <div className="flex-1 overflow-y-auto max-h-64 pr-1 space-y-3.5 no-scrollbar">
-              {subscribers.length > 0 ? (
-                subscribers.map((sub, idx) => (
-                  <div 
-                    key={sub.id || idx} 
-                    className="p-3 rounded-xl bg-slate-50 border border-slate-200/50 flex items-center justify-between hover:border-slate-300 transition-colors"
-                  >
-                    <div className="space-y-0.5">
-                      <p className="text-xs font-bold text-slate-800">{sub.name}</p>
-                      <p className="text-[10px] text-slate-500 font-mono font-bold">{sub.email}</p>
+            <div className="flex-grow overflow-y-auto max-h-[300px] pr-1 space-y-3.5 no-scrollbar">
+              {activeTab === 'subscribers' ? (
+                subscribers.length > 0 ? (
+                  subscribers.map((sub, idx) => (
+                    <div 
+                      key={sub.id || idx} 
+                      className="p-3 rounded-xl bg-slate-50 border border-slate-200/50 flex items-center justify-between hover:border-slate-300 transition-colors"
+                    >
+                      <div className="space-y-0.5">
+                        <p className="text-xs font-bold text-slate-800">{sub.name}</p>
+                        <p className="text-[10px] text-slate-500 font-mono font-bold">{sub.email}</p>
+                      </div>
+                      <span className="text-[9px] text-slate-500 font-semibold uppercase">
+                        {new Date(sub.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </span>
                     </div>
-                    <span className="text-[9px] text-slate-500 font-semibold uppercase">
-                      {new Date(sub.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                    </span>
+                  ))
+                ) : (
+                  <div className="h-full flex items-center justify-center py-12">
+                    <span className="text-xs text-slate-500">No subscribers registered yet.</span>
                   </div>
-                ))
+                )
               ) : (
-                <div className="h-full flex items-center justify-center">
-                  <span className="text-xs text-slate-500">No subscribers registered yet.</span>
-                </div>
+                supportMessages.length > 0 ? (
+                  supportMessages.map((msg, idx) => (
+                    <div 
+                      key={msg.id || idx} 
+                      className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/50 flex flex-col gap-2 hover:border-slate-300 transition-colors text-left"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="space-y-0.5">
+                          <p className="text-xs font-bold text-slate-800">{msg.name}</p>
+                          <p className="text-[10px] text-slate-500 font-mono font-bold">{msg.email}</p>
+                        </div>
+                        <span className="text-[9px] text-slate-400 font-semibold shrink-0 uppercase">
+                          {new Date(msg.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-650 bg-white p-2.5 rounded-lg border border-slate-150 leading-relaxed break-words font-medium">
+                        {msg.message}
+                      </p>
+                      <a 
+                        href={`mailto:${msg.email}?subject=Re:%20ClassSync%20Support`} 
+                        className="text-[10px] text-sky-650 hover:text-sky-850 font-bold hover:underline self-end"
+                      >
+                        Reply via Email
+                      </a>
+                    </div>
+                  ))
+                ) : (
+                  <div className="h-full flex items-center justify-center py-12">
+                    <span className="text-xs text-slate-500">No support messages received yet.</span>
+                  </div>
+                )
               )}
             </div>
           </div>

@@ -79,13 +79,16 @@ export default function FaqSection() {
         {/* Support button */}
         <div className="mt-10 flex flex-col items-center text-center gap-3">
           <p className="text-slate-600 font-semibold">Still have a question?</p>
-          <a
-            href="mailto:support@dhrruwa.com?subject=ClassSync%20Support"
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              window.dispatchEvent(new CustomEvent('open-support-widget'));
+            }}
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-sky-500/25 active:scale-95 cursor-pointer"
           >
             <LifeBuoy className="w-5 h-5" />
             Contact Support
-          </a>
+          </button>
         </div>
 
       </div>

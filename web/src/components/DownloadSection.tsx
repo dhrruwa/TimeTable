@@ -26,6 +26,13 @@ export default function DownloadSection() {
     try {
       const res = await subscribeNewsletter(name, email);
       if (res.success) {
+        // Trigger background SMTP dispatch to send the confirmation email
+        fetch('/api/send-app-link', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email }),
+        }).catch(err => console.error('Background email dispatch failed:', err));
+
         setActionStatus('success');
         setStatusMsg(res.message);
         setName('');
@@ -194,11 +201,15 @@ export default function DownloadSection() {
                     className="space-y-4"
                   >
                     {actionStatus === 'success' ? (
-                      <div className="p-5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center gap-3">
-                        <CheckCircle2 className="w-6 h-6 text-emerald-500 shrink-0" />
+                      <div className="p-6 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-start sm:items-center gap-4 text-left shadow-2xs">
+                        <div className="w-10 h-10 rounded-full bg-emerald-100/80 flex items-center justify-center text-emerald-600 shrink-0">
+                          <CheckCircle2 className="w-5 h-5 animate-bounce" />
+                        </div>
                         <div>
-                          <p className="font-bold text-sm">Successfully Registered!</p>
-                          <p className="text-xs text-slate-500 mt-0.5">{statusMsg}</p>
+                          <p className="font-black text-sm text-slate-900">Registered Successfully!</p>
+                          <p className="text-xs text-slate-650 font-bold leading-relaxed mt-1">
+                            Early access registered! We have sent a confirmation details email to you. Please check your inbox.
+                          </p>
                         </div>
                       </div>
                     ) : (

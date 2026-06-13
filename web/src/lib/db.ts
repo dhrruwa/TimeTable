@@ -1,12 +1,5 @@
 import { supabase, isSupabaseConfigured } from './supabase';
 
-export interface Stats {
-  totalDownloads: number;
-  activeStudents: number;
-  timetablesCreated: number;
-  classesTracked: number;
-}
-
 export interface Subscriber {
   id: string | number;
   name: string;
@@ -25,12 +18,6 @@ const KEYS = {
   SUBSCRIBERS: 'classsync_mock_subscribers',
   SESSION_DOWNLOADS: 'classsync_session_downloads',
 };
-
-// Base baseline statistics to make it look premium out of the box
-const BASE_DOWNLOADS = 0;
-const BASE_STUDENTS = 0;
-const BASE_TIMETABLES = 0;
-const BASE_CLASSES = 0;
 
 // Helper to format date as "MMM DD"
 function formatDate(date: Date): string {
@@ -72,9 +59,9 @@ export async function subscribeNewsletter(name: string, email: string): Promise<
         return { success: false, message: 'This email is already registered.' };
       }
       
-      return { success: false, message: error.message };
+      console.error('Supabase newsletter subscribe failed (falling back to local storage):', error);
     } catch (err: any) {
-      return { success: false, message: err.message || 'Server error, please try again.' };
+      console.error('Supabase newsletter subscribe error (falling back to local storage):', err);
     }
   }
 
@@ -100,66 +87,6 @@ export async function subscribeNewsletter(name: string, email: string): Promise<
   }
 
   return { success: false, message: 'Local storage not available.' };
-}
-
-export async function getStats(): Promise<Stats> {
-  let dbDownloadsCount = 0;
-  let dbSubscribersCount = 0;
-
-  if (isSupabaseConfigured && supabase) {
-    try {
-      // Get count of downloads
-      const { count: downCount, error: downErr } = await supabase
-        .from('downloads')
-        .select('*', { count: 'exact', head: true });
-
-      if (!downErr && downCount !== null) {
-        dbDownloadsCount = downCount;
-      }
-
-      // Get count of subscribers
-      const { count: subCount, error: subErr } = await supabase
-        .from('newsletter_subscribers')
-        .select('*', { count: 'exact', head: true });
-
-      if (!subErr && subCount !== null) {
-        dbSubscribersCount = subCount;
-      }
-    } catch (err) {
-      console.error('Failed to fetch stats from Supabase:', err);
-    }
-  }
-
-  // Calculate stats combining baseline values + database/mock values
-  let additionalDownloads = dbDownloadsCount;
-  let additionalSubs = dbSubscribersCount;
-
-  if (typeof window !== 'undefined') {
-    const sessionDowns = Number(localStorage.getItem(KEYS.SESSION_DOWNLOADS) || '0');
-    const rawSubs = localStorage.getItem(KEYS.SUBSCRIBERS);
-    const mockSubs: Subscriber[] = rawSubs ? JSON.parse(rawSubs) : [];
-    
-    // In mock mode, we add the session downloads and local storage subscribers
-    if (!isSupabaseConfigured) {
-      additionalDownloads = sessionDowns;
-      additionalSubs = mockSubs.length;
-    } else {
-      // In Supabase mode, we also add session downloads to show instant feedback
-      additionalDownloads += sessionDowns;
-    }
-  }
-
-  const totalDownloads = BASE_DOWNLOADS + additionalDownloads;
-  const activeStudents = Math.round(BASE_STUDENTS + additionalDownloads * 0.9 + additionalSubs);
-  const timetablesCreated = BASE_TIMETABLES + additionalDownloads + additionalSubs * 2;
-  const classesTracked = BASE_CLASSES + (additionalDownloads * 18);
-
-  return {
-    totalDownloads,
-    activeStudents,
-    timetablesCreated,
-    classesTracked,
-  };
 }
 
 export async function getSubscribers(): Promise<Subscriber[]> {
@@ -275,4 +202,94 @@ export async function getChartData(): Promise<ChartDataPoint[]> {
   }
 
   return data;
+}
+
+export interface SupportMessage {
+  id: string | number;
+  name: string;
+  email: string;
+  message: string;
+  timestamp: string;
+}
+
+export async function sendSupportMessage(name: string, email: string, message: string): Promise<{ success: boolean; message: string }> {
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { error } = await supabase
+        .from('support_messages')
+        .insert([{ name, email, message }]);
+
+      if (!error) {
+        return { success: true, message: 'Message sent successfully!' };
+      }
+      console.error('Supabase support message failed (falling back to local storage):', error);
+    } catch (err: any) {
+      console.error('Supabase support message error (falling back to local storage):', err);
+    }
+  }
+
+  // Local Storage Fallback
+  if (typeof window !== 'undefined') {
+    const rawMsgs = localStorage.getItem('classsync_mock_support_messages');
+    const messages: SupportMessage[] = rawMsgs ? JSON.parse(rawMsgs) : [];
+
+    const newMsg: SupportMessage = {
+      id: `mock_${Date.now()}`,
+      name,
+      email,
+      message,
+      timestamp: new Date().toISOString(),
+    };
+
+    messages.unshift(newMsg);
+    localStorage.setItem('classsync_mock_support_messages', JSON.stringify(messages));
+    return { success: true, message: 'Message recorded locally!' };
+  }
+
+  return { success: false, message: 'Local storage not available.' };
+}
+
+export async function getSupportMessages(): Promise<SupportMessage[]> {
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('support_messages')
+        .select('*')
+        .order('timestamp', { ascending: false })
+        .limit(50);
+
+      if (!error && data) {
+        return data.map(d => ({
+          id: d.id,
+          name: d.name,
+          email: d.email,
+          message: d.message,
+          timestamp: d.timestamp,
+        }));
+      }
+      console.error('Supabase fetch support messages failed:', error);
+    } catch (err) {
+      console.error('Supabase support messages error:', err);
+    }
+  }
+
+  // Local Storage Fallback
+  if (typeof window !== 'undefined') {
+    const rawMsgs = localStorage.getItem('classsync_mock_support_messages');
+    const list: SupportMessage[] = rawMsgs ? JSON.parse(rawMsgs) : [];
+    
+    // If list is empty, pre-populate some mock data
+    if (list.length === 0) {
+      const mockList: SupportMessage[] = [
+        { id: 1, name: 'Dhruva', email: 'dhruva@college.edu', message: 'Hey! Is there a light mode theme option coming in the next release? Love the dark theme, but light mode would be great for outdoors.', timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString() },
+        { id: 2, name: 'Alice Smith', email: 'alice.s@university.edu', message: 'I tried importing my friends timetable sync code but it failed with error 404. Can you check if the sync servers are up?', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString() },
+        { id: 3, name: 'Rohan Mehta', email: 'rohanm@techinst.edu', message: 'Amazing work on the attendance calculator! It has saved me from falling below 75% so many times already.', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString() },
+      ];
+      localStorage.setItem('classsync_mock_support_messages', JSON.stringify(mockList));
+      return mockList;
+    }
+    return list;
+  }
+
+  return [];
 }

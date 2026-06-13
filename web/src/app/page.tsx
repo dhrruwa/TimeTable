@@ -6,13 +6,12 @@ import ProblemSection from '../components/ProblemSection';
 import SolutionSection from '../components/SolutionSection';
 import TimelineSection from '../components/TimelineSection';
 import ShowcaseSection from '../components/ShowcaseSection';
-import CollegesGrid from '../components/CollegesGrid';
-import StatsSection from '../components/StatsSection';
 import DownloadSection from '../components/DownloadSection';
 import TestimonialsSection from '../components/TestimonialsSection';
 import FaqSection from '../components/FaqSection';
 import Footer from '../components/Footer';
 import CursorGlow from '../components/CursorGlow';
+import SupportWidget from '../components/SupportWidget';
 
 export default function Home() {
   return (
@@ -34,14 +33,13 @@ export default function Home() {
         <SolutionSection />
         <TimelineSection />
         <ShowcaseSection />
-        <CollegesGrid />
-        <StatsSection />
         <DownloadSection />
         <TestimonialsSection />
         <FaqSection />
       </main>
 
       <Footer />
+      <SupportWidget />
     </div>
   );
 }

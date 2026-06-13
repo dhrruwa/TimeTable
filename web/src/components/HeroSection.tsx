@@ -1,20 +1,24 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock } from 'lucide-react';
 
 const questions = [
-  <span>What <span className="bg-gradient-to-r from-sky-500 via-sky-600 to-indigo-600 bg-clip-text text-transparent font-extrabold">class</span> is running right now?</span>,
-  <span>What is your <span className="bg-gradient-to-r from-sky-500 via-sky-600 to-indigo-600 bg-clip-text text-transparent font-extrabold">next period</span>?</span>,
-  <span>Which subject do you have <span className="bg-gradient-to-r from-sky-500 via-sky-600 to-indigo-600 bg-clip-text text-transparent font-extrabold">tomorrow morning</span>?</span>,
-  <span>How much of today’s classes are <span className="bg-gradient-to-r from-sky-500 via-sky-600 to-indigo-600 bg-clip-text text-transparent font-extrabold">already completed</span>?</span>,
-  <span>Are you sure your attendance percentage is <span className="bg-gradient-to-r from-sky-500 via-sky-600 to-indigo-600 bg-clip-text text-transparent font-extrabold">safe</span>?</span>
+  <span key="current-class">What <span className="bg-gradient-to-r from-sky-500 via-sky-600 to-indigo-600 bg-clip-text text-transparent font-extrabold">class</span> is running right now?</span>,
+  <span key="next-period">What is your <span className="bg-gradient-to-r from-sky-500 via-sky-600 to-indigo-600 bg-clip-text text-transparent font-extrabold">next period</span>?</span>,
+  <span key="tomorrow-morning">Which subject do you have <span className="bg-gradient-to-r from-sky-500 via-sky-600 to-indigo-600 bg-clip-text text-transparent font-extrabold">tomorrow morning</span>?</span>,
+  <span key="daily-progress">How much of today’s classes are <span className="bg-gradient-to-r from-sky-500 via-sky-600 to-indigo-600 bg-clip-text text-transparent font-extrabold">already completed</span>?</span>,
+  <span key="attendance">Are you sure your attendance percentage is <span className="bg-gradient-to-r from-sky-500 via-sky-600 to-indigo-600 bg-clip-text text-transparent font-extrabold">safe</span>?</span>
 ];
 
 export default function HeroSection() {
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
   const [time, setTime] = useState<string>('09:00:00 AM');
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const isFirstQuestionRef = useRef(true);
+  const heroRef = useRef<HTMLElement | null>(null);
+  const isHeroVisibleRef = useRef(true);
   
   // Live clock updater
   useEffect(() => {
@@ -35,8 +39,109 @@ export default function HeroSection() {
     return () => clearInterval(questionInterval);
   }, []);
 
+  useEffect(() => {
+    const hero = heroRef.current;
+    if (!hero) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        isHeroVisibleRef.current = entry.isIntersecting;
+      },
+      { threshold: 0.2 },
+    );
+
+    observer.observe(hero);
+    return () => observer.disconnect();
+  }, []);
+
+  // Browsers allow page audio after the visitor's first interaction.
+  useEffect(() => {
+    const enableAudio = () => {
+      if (!audioContextRef.current) {
+        audioContextRef.current = new AudioContext();
+      }
+      void audioContextRef.current.resume();
+    };
+
+    window.addEventListener('pointerdown', enableAudio, { once: true });
+    window.addEventListener('keydown', enableAudio, { once: true });
+
+    return () => {
+      window.removeEventListener('pointerdown', enableAudio);
+      window.removeEventListener('keydown', enableAudio);
+      const audioContext = audioContextRef.current;
+      audioContextRef.current = null;
+      void audioContext?.close();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isFirstQuestionRef.current) {
+      isFirstQuestionRef.current = false;
+      return;
+    }
+
+    if (!isHeroVisibleRef.current) return;
+
+    const audioContext = audioContextRef.current;
+    if (!audioContext || audioContext.state !== 'running') return;
+
+    const now = audioContext.currentTime;
+    const duration = 0.75;
+    const sampleCount = Math.ceil(audioContext.sampleRate * duration);
+    const noiseBuffer = audioContext.createBuffer(1, sampleCount, audioContext.sampleRate);
+    const noiseData = noiseBuffer.getChannelData(0);
+
+    for (let i = 0; i < sampleCount; i++) {
+      const progress = i / sampleCount;
+      noiseData[i] = (Math.random() * 2 - 1) * Math.sin(Math.PI * progress);
+    }
+
+    const noise = audioContext.createBufferSource();
+    const filter = audioContext.createBiquadFilter();
+    const whooshGain = audioContext.createGain();
+    const impact = audioContext.createOscillator();
+    const impactGain = audioContext.createGain();
+
+    noise.buffer = noiseBuffer;
+    filter.type = 'bandpass';
+    filter.Q.setValueAtTime(0.8, now);
+    filter.frequency.setValueAtTime(250, now);
+    filter.frequency.exponentialRampToValueAtTime(4200, now + 0.48);
+    filter.frequency.exponentialRampToValueAtTime(900, now + duration);
+    whooshGain.gain.setValueAtTime(0.0001, now);
+    whooshGain.gain.exponentialRampToValueAtTime(0.18, now + 0.35);
+    whooshGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+    impact.type = 'sine';
+    impact.frequency.setValueAtTime(100, now + 0.34);
+    impact.frequency.exponentialRampToValueAtTime(48, now + 0.68);
+    impactGain.gain.setValueAtTime(0.0001, now);
+    impactGain.gain.setValueAtTime(0.12, now + 0.34);
+    impactGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.7);
+
+    noise.connect(filter);
+    filter.connect(whooshGain);
+    whooshGain.connect(audioContext.destination);
+    impact.connect(impactGain);
+    impactGain.connect(audioContext.destination);
+
+    noise.addEventListener('ended', () => {
+      noise.disconnect();
+      filter.disconnect();
+      whooshGain.disconnect();
+      impact.disconnect();
+      impactGain.disconnect();
+    }, { once: true });
+
+    noise.start(now);
+    noise.stop(now + duration);
+    impact.start(now);
+    impact.stop(now + duration);
+  }, [currentQuestionIdx]);
+
   return (
-    <section className="relative min-h-[98vh] sm:min-h-[101vh] lg:min-h-[104vh] flex flex-col items-center justify-center pt-32 pb-24 px-4 overflow-hidden bg-transparent">
+    <section ref={heroRef} className="relative min-h-[98vh] sm:min-h-[101vh] lg:min-h-[104vh] flex flex-col items-center justify-center pt-32 pb-24 px-4 overflow-hidden bg-transparent">
       {/* Background patterns: Premium clean grids & liquid layout elements */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(14,165,233,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(14,165,233,0.015)_1px,transparent_1px)] bg-[size:3.5rem_3.5rem] z-0"></div>
       
