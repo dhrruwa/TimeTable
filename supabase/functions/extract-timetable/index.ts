@@ -137,22 +137,38 @@ Deno.serve(async (req) => {
     },
   };
 
-  let res: Response;
-  try {
-    res = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(geminiBody),
-    });
-  } catch (_) {
-    return json({ error: "upstream_unreachable" }, 502);
+  // gemini-2.5-flash intermittently returns 503 ("high demand") / 429. These are
+  // transient, so retry a few times with backoff before surfacing an error.
+  // Downscaled uploads keep each call fast, so a few retries stay well within
+  // the function's wall-clock budget.
+  let res: Response | null = null;
+  const transient = new Set([429, 500, 502, 503, 504]);
+  for (let attempt = 0; attempt < 4; attempt++) {
+    if (attempt > 0) {
+      await new Promise((r) => setTimeout(r, 700 * attempt)); // 0.7s, 1.4s, 2.1s
+    }
+    try {
+      res = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(geminiBody),
+      });
+    } catch (_) {
+      res = null; // network blip — retry
+      continue;
+    }
+    if (!transient.has(res.status)) break; // success or a non-retryable error
   }
 
-  if (res.status === 429) {
+  if (res === null) {
+    return json({ error: "upstream_unreachable" }, 502);
+  }
+  if (res.status === 429 || res.status === 503) {
+    // Still overloaded after retries — tell the client to try again shortly.
     return json(
       {
         error: "rate_limited",
-        message: "Gemini is rate-limited. Try again in a minute.",
+        message: "The AI service is busy right now. Try again in a moment.",
       },
       429,
     );

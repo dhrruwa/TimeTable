@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -58,7 +59,12 @@ class TimetableImportService {
             },
             body: body,
           )
-          .timeout(const Duration(seconds: 60));
+          .timeout(const Duration(seconds: 120));
+    } on TimeoutException {
+      throw const ImportException(
+        'The server took too long to respond. Try a clearer, tighter photo of '
+        'just the timetable grid, then try again.',
+      );
     } catch (_) {
       throw const ImportException(
         'Couldn’t reach the server. Check your connection and try again.',

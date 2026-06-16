@@ -1,8 +1,10 @@
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/timetable_import_service.dart';
+import '../logic/image_prep.dart';
 import '../logic/import_mapper.dart';
 import '../providers/providers.dart';
 import '../widgets/dhrruwa_footer.dart';
@@ -52,9 +54,16 @@ class _MagicImportScreenState extends ConsumerState<MagicImportScreen> {
         throw const ImportException('Unsupported file. Use a JPG, PNG, or PDF.');
       }
 
+      // Downscale photos off the UI isolate so the upload is small and fast —
+      // a full-res phone photo is the usual cause of slow/timed-out imports.
+      setState(() => _status = 'Preparing image…');
+      final prepared =
+          await compute(prepareForUpload, PrepareRequest(bytes, mime));
+
       setState(() => _status = 'Reading your timetable…');
       final service = ref.read(timetableImportServiceProvider);
-      final json = await service.extract(bytes: bytes, mime: mime);
+      final json =
+          await service.extract(bytes: prepared.bytes, mime: prepared.mime);
 
       final draft = mapGeminiJson(json);
       if (draft.periodCount == 0) {

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../logic/import_mapper.dart';
 import '../providers/community_providers.dart';
 import '../providers/widget_providers.dart';
+import '../widgets/time_utils.dart';
 
 /// Mandatory review step after a magic import. The extracted [DraftTimetable] is
 /// fully editable here — meta, per-day class order (order = time in this app),
@@ -198,6 +199,8 @@ class _ImportReviewScreenState extends ConsumerState<ImportReviewScreen> {
                 ],
               ),
               const SizedBox(height: 12),
+              _detectedTimings(context),
+              const SizedBox(height: 4),
               if (days.isEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 32),
@@ -244,6 +247,38 @@ class _ImportReviewScreenState extends ConsumerState<ImportReviewScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  /// Read-only summary of the timings detected from the image. These flow into
+  /// the saved timetable; fine-tune them later in Schedule settings.
+  Widget _detectedTimings(BuildContext context) {
+    final cfg = _draft.config;
+    final scheme = Theme.of(context).colorScheme;
+    final parts = <String>[
+      'Starts ${TimeUtils.formatMinutes(context, cfg.dayStartMin)}',
+      '${cfg.classMins}-min periods',
+      if (cfg.teaMins > 0) 'tea after P${cfg.teaAfter}',
+      if (cfg.lunchMins > 0) 'lunch after P${cfg.lunchAfter}',
+    ];
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.schedule, size: 18, color: scheme.primary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Detected timings: ${parts.join(' · ')}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+        ],
       ),
     );
   }

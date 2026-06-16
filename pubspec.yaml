@@ -32,6 +32,7 @@ dependencies:
   # AI timetable import (pick image/PDF + call the Edge Function proxy)
   file_picker: ^8.1.2
   http: ^1.2.2
+  image: ^4.2.0 # downscale photos before upload (smaller payload, faster OCR)
 
 # file_picker pulls win32 ^5 while share_plus 13 wants win32 ^6. win32 is a
 # Windows-only package and this app targets Android/iOS, so pinning to 5.x is
