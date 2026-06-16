@@ -24,24 +24,59 @@ function formatDate(date: Date): string {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
+function incrementLocalDownloadMetrics() {
+  if (typeof window === 'undefined') return;
+
+  const currentSession = Number(localStorage.getItem(KEYS.SESSION_DOWNLOADS) || '0');
+  localStorage.setItem(KEYS.SESSION_DOWNLOADS, String(currentSession + 1));
+
+  const currentTotal = Number(localStorage.getItem(KEYS.DOWNLOADS_COUNT) || '0');
+  localStorage.setItem(KEYS.DOWNLOADS_COUNT, String(currentTotal + 1));
+}
+
 export async function trackDownload(): Promise<boolean> {
+  let tracked = false;
+
   if (isSupabaseConfigured && supabase) {
     try {
       const { error } = await supabase.from('downloads').insert([{}]);
-      if (!error) return true;
-      console.error('Supabase download logging failed:', error);
+      if (!error) {
+        tracked = true;
+      } else {
+        console.error('Supabase download logging failed:', error);
+      }
     } catch (err) {
       console.error('Supabase download error:', err);
     }
   }
 
-  // Local Storage Fallback
+  // Local Storage fallback and client-side count caching
   if (typeof window !== 'undefined') {
-    const currentSession = Number(localStorage.getItem(KEYS.SESSION_DOWNLOADS) || '0');
-    localStorage.setItem(KEYS.SESSION_DOWNLOADS, String(currentSession + 1));
-    return true;
+    incrementLocalDownloadMetrics();
+    tracked = true;
   }
-  return true;
+
+  return tracked;
+}
+
+export async function getDownloadCount(): Promise<number> {
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { count, error } = await supabase.from('downloads').select('*', { count: 'exact', head: true });
+      if (!error && count !== null) {
+        return count;
+      }
+      console.error('Supabase download count failed:', error);
+    } catch (err) {
+      console.error('Supabase download count error:', err);
+    }
+  }
+
+  if (typeof window !== 'undefined') {
+    return Number(localStorage.getItem(KEYS.DOWNLOADS_COUNT) || '0');
+  }
+
+  return 0;
 }
 
 export async function subscribeNewsletter(name: string, email: string): Promise<{ success: boolean; message: string }> {

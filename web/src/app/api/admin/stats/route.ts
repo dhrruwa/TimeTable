@@ -30,6 +30,8 @@ export async function GET() {
     let dbSubscribers: any[] = [];
     let dbSupportMessages: any[] = [];
     let isConnected = false;
+    const chartData: { date: string; downloads: number }[] = [];
+    const today = new Date();
 
     if (isConfigured) {
       try {
@@ -68,6 +70,40 @@ export async function GET() {
           dbSupportMessages = supportData;
         }
 
+        // Query download timestamps for the last 7 days
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+        const { data: downloadRows, error: downloadErr } = await supabaseAdmin
+          .from('downloads')
+          .select('timestamp')
+          .gte('timestamp', sevenDaysAgo.toISOString());
+
+        let downloadRowsData: { timestamp: string }[] = [];
+        if (!downloadErr && downloadRows) {
+          downloadRowsData = downloadRows as { timestamp: string }[];
+        } else if (downloadErr) {
+          console.error('Supabase download rows fetch failed:', downloadErr);
+        }
+
+        if (downloadRowsData.length > 0) {
+          const countsByDate: Record<string, number> = {};
+          const formatDate = (date: Date) => date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          downloadRowsData.forEach((row) => {
+            const dateStr = formatDate(new Date(row.timestamp));
+            countsByDate[dateStr] = (countsByDate[dateStr] || 0) + 1;
+          });
+
+          for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(today.getDate() - i);
+            const dateStr = formatDate(d);
+            chartData.push({
+              date: dateStr,
+              downloads: countsByDate[dateStr] || 0,
+            });
+          }
+        }
+
         isConnected = true;
       } catch (err) {
         console.error('Supabase server-side admin query failed, falling back to mock:', err);
@@ -80,28 +116,17 @@ export async function GET() {
     const timetablesCreated = BASE_TIMETABLES + dbDownloadsCount + dbSubscribers.length * 2;
     const classesTracked = BASE_CLASSES + (dbDownloadsCount * 18);
 
-    // Build chart data for the last 7 days
-    const chartData = [];
-    const today = new Date();
-    const baselineDailyDownloads = [0, 0, 0, 0, 0, 0, 0];
-    
-    // Helper to format date
-    const formatDate = (date: Date) => date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-
-    // In a real database, we would aggregate downloads per day. 
-    // Here we return the baseline downloads + any downloads recorded in the db
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(today.getDate() - i);
-      const dateStr = formatDate(d);
-      
-      // Simulate/add database counts if today (we don't group by date dynamically in the mock to keep it simple)
-      const countForDay = i === 0 ? dbDownloadsCount : 0;
-      
-      chartData.push({
-        date: dateStr,
-        downloads: baselineDailyDownloads[6 - i] + countForDay,
-      });
+    // If Supabase did not return live chart data, build a default 7-day array
+    if (chartData.length === 0) {
+      const formatDate = (date: Date) => date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(today.getDate() - i);
+        chartData.push({
+          date: formatDate(d),
+          downloads: i === 0 ? dbDownloadsCount : 0,
+        });
+      }
     }
 
     // Generate recent subscribers list

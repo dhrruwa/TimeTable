@@ -1,15 +1,16 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowDownToLine, CheckCircle2, ShieldCheck, Mail, Smartphone, Download, User } from 'lucide-react';
-import { trackDownload, subscribeNewsletter } from '../lib/db';
+import { getDownloadCount, trackDownload, subscribeNewsletter } from '../lib/db';
 import confetti from 'canvas-confetti';
 
 export default function DownloadSection() {
   const [contactType, setContactType] = useState<'email' | 'direct'>('email');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [downloadCount, setDownloadCount] = useState<number | null>(null);
   
   const [actionStatus, setActionStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [statusMsg, setStatusMsg] = useState('');
@@ -56,7 +57,14 @@ export default function DownloadSection() {
   const handleDirectDownload = async () => {
     setActionStatus('loading');
     try {
-      await trackDownload();
+      const success = await trackDownload();
+      if (!success) {
+        throw new Error('Download tracking failed');
+      }
+
+      const currentCount = await getDownloadCount();
+      setDownloadCount(currentCount);
+
       confetti({
         particleCount: 150,
         spread: 80,
@@ -79,10 +87,19 @@ export default function DownloadSection() {
         setStatusMsg('');
       }, 5000);
     } catch (err) {
+      console.error(err);
       setActionStatus('error');
       setStatusMsg('Download failed.');
     }
   };
+
+  useEffect(() => {
+    const loadDownloadCount = async () => {
+      const count = await getDownloadCount();
+      setDownloadCount(count);
+    };
+    loadDownloadCount();
+  }, []);
 
   return (
     <section id="download" className="relative py-20 bg-slate-50 overflow-hidden border-t border-slate-100">
@@ -269,7 +286,7 @@ export default function DownloadSection() {
                         className="flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-gradient-to-r from-blue-900 to-sky-500 hover:from-blue-950 hover:to-sky-600 text-white font-extrabold text-sm shadow-md transition-all cursor-pointer w-full sm:w-auto"
                       >
                         <ArrowDownToLine className="w-4.5 h-4.5 animate-bounce" />
-                        Download Android APK (~74MB)
+                        Download Android APK (~74MB) {downloadCount !== null ? `(${downloadCount})` : ''}
                       </button>
 
                       <div className="flex items-center gap-1 text-xs text-slate-500 font-semibold">
