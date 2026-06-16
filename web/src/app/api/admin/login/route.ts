@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import crypto from 'crypto';
 
 export async function POST(request: Request) {
   try {
@@ -8,8 +9,10 @@ export async function POST(request: Request) {
     if (password === adminPassword) {
       const response = NextResponse.json({ success: true, message: 'Logged in successfully' });
       
+      const sessionValue = crypto.createHash('sha256').update(adminPassword).digest('hex');
+      
       // Set a secure, HTTP-only session cookie valid for 2 hours
-      response.cookies.set('classsync_admin_session', 'authenticated', {
+      response.cookies.set('classsync_admin_session', sessionValue, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',

@@ -13,6 +13,7 @@ import '../state/placement_state.dart';
 import '../theme.dart';
 import '../widgets/time_utils.dart';
 import 'edit_day_screen.dart';
+import 'magic_import_screen.dart';
 
 // ─── selection (long-pressed cell) ───────────────────────────────────────────
 
@@ -358,6 +359,15 @@ class WeekScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Week'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.auto_awesome),
+            tooltip: 'Magic import',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const MagicImportScreen()),
+            ),
+          ),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(22),
           child: Padding(

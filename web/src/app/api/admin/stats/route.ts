@@ -1,14 +1,17 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
+import crypto from 'crypto';
 
 export async function GET() {
   try {
     // 1. Authenticate check
     const cookieStore = await cookies();
     const session = cookieStore.get('classsync_admin_session');
+    const adminPassword = process.env.ADMIN_PASSWORD || 'BOLDfit@14';
+    const expectedSessionValue = crypto.createHash('sha256').update(adminPassword).digest('hex');
 
-    if (!session || session.value !== 'authenticated') {
+    if (!session || session.value !== expectedSessionValue) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

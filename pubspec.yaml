@@ -29,6 +29,16 @@ dependencies:
   mobile_scanner: ^7.2.0
   url_launcher: ^6.3.2
 
+  # AI timetable import (pick image/PDF + call the Edge Function proxy)
+  file_picker: ^8.1.2
+  http: ^1.2.2
+
+# file_picker pulls win32 ^5 while share_plus 13 wants win32 ^6. win32 is a
+# Windows-only package and this app targets Android/iOS, so pinning to 5.x is
+# safe and resolves the conflict without downgrading share_plus.
+dependency_overrides:
+  win32: ^5.9.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
