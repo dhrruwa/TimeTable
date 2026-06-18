@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io' show Platform;
 
 import 'package:flutter/widgets.dart';
@@ -59,6 +60,33 @@ class HomeWidgetService {
     final weekdayShort = _short[(weekday - 1) % 7].toUpperCase();
     final weekdayFull = _full[(weekday - 1) % 7];
     final date = '${at.day} ${_months[at.month - 1]}';
+
+    // Structured data for the NATIVE self-updating Android widget: every day's
+    // precomputed timeline. The native widget computes the *current* period from
+    // this + the system clock, so it stays live in the background without the
+    // Flutter engine (which can only render while the app is foregrounded).
+    final timelines = <String, dynamic>{};
+    for (var d = 1; d <= 6; d++) {
+      final tl = TimetableBuilder.buildDay(
+        timetable.periodsOn(d),
+        timetable.subjectsById,
+        timetable.config,
+      );
+      timelines['$d'] = [
+        for (final e in tl)
+          {
+            's': e.startMin,
+            'e': e.endMin,
+            't': e.title,
+            'c': e.color,
+            'k': e.kind.name,
+            'room': e.room ?? '',
+            'teacher': e.teacher ?? '',
+          }
+      ];
+    }
+    await HomeWidget.saveWidgetData<String>(
+        'tt_timelines', jsonEncode(timelines));
 
     try {
       await HomeWidget.renderFlutterWidget(

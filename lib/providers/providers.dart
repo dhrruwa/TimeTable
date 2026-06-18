@@ -15,6 +15,13 @@ final nowProvider = Provider<DateTime>(
   (ref) => ref.watch(clockProvider).value ?? DateTime.now(),
 );
 
+/// Ticks every second — used only by the live countdown on the Today hero, so
+/// the cost is bounded to when that screen is visible.
+final secondClockProvider = StreamProvider.autoDispose<DateTime>((ref) async* {
+  yield DateTime.now();
+  yield* Stream.periodic(const Duration(seconds: 1), (_) => DateTime.now());
+});
+
 /// App theme mode. Defaults to following the system; toggled from the UI.
 final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.system);
 

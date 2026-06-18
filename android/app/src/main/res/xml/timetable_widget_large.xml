@@ -6,6 +6,6 @@
     android:targetCellHeight="4"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"
-    android:initialLayout="@layout/timetable_widget"
+    android:initialLayout="@layout/widget_native_large"
     android:previewImage="@mipmap/ic_launcher"
-    android:updatePeriodMillis="1800000" />
+    android:updatePeriodMillis="0" />

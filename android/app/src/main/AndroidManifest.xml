@@ -1,6 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Network access for AI timetable import (Supabase Edge Function proxy). -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Re-arm the widget's self-update alarm after a reboot. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!-- QR scanning (mobile_scanner). Camera is optional so non-camera devices
          can still install. -->
     <uses-permission android:name="android.permission.CAMERA" />
@@ -81,6 +83,14 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/timetable_widget_large" />
+        </receiver>
+
+        <!-- Drives the per-minute self-update tick and re-arms after reboot. -->
+        <receiver android:name=".WidgetTickReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="com.example.timetable.WIDGET_TICK" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
         </receiver>
     </application>
     <!-- Required to query activities that can process text, see:

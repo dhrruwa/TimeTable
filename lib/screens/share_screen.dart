@@ -412,6 +412,41 @@ class _QrCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Pre-validate so an over-capacity timetable shows guidance instead of a
+    // broken/blank QR (QrImageView throws when the data won't fit any version).
+    final validation = QrValidator.validate(
+      data: link,
+      version: QrVersions.auto,
+      errorCorrectionLevel: QrErrorCorrectLevel.L,
+    );
+    final fits = validation.status == QrValidationStatus.valid &&
+        validation.qrCode != null;
+
+    if (!fits) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(22),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.qr_code_2,
+                color: Theme.of(context).colorScheme.onSurfaceVariant),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'This timetable is too large to fit in a QR code. Use the '
+                '“Share” or “Copy Link” button above instead — the link works '
+                'everywhere.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Center(
       child: Container(
         padding: const EdgeInsets.all(14),
@@ -422,12 +457,10 @@ class _QrCard extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            QrImageView(
-              data: link,
-              version: QrVersions.auto,
+            QrImageView.withQr(
+              qr: validation.qrCode!,
               size: 220,
               backgroundColor: Colors.white,
-              errorCorrectionLevel: QrErrorCorrectLevel.L,
             ),
             const SizedBox(height: 6),
             const Text('Scan to import',

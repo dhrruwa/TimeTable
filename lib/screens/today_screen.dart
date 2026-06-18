@@ -292,6 +292,7 @@ class _Hero extends StatelessWidget {
                     ],
                   ],
                 ),
+                if (!isBreak) _ClassCountdown(endMin: current.endMin, onColor: fg),
                 if (!isBreak &&
                     current.teacher != null &&
                     current.teacher!.isNotEmpty) ...[
@@ -307,6 +308,38 @@ class _Hero extends StatelessWidget {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Live "MM:SS left" countdown to the end of the current class. Watches a
+/// per-second clock so it ticks smoothly while the Today screen is open.
+class _ClassCountdown extends ConsumerWidget {
+  final int endMin;
+  final Color onColor;
+  const _ClassCountdown({required this.endMin, required this.onColor});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final now = ref.watch(secondClockProvider).value ?? DateTime.now();
+    final remaining =
+        endMin * 60 - (now.hour * 3600 + now.minute * 60 + now.second);
+    if (remaining <= 0) return const SizedBox.shrink();
+    final mm = (remaining ~/ 60).toString().padLeft(2, '0');
+    final ss = (remaining % 60).toString().padLeft(2, '0');
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.hourglass_bottom_outlined,
+              size: 14, color: onColor.withValues(alpha: 0.9)),
+          const SizedBox(width: 4),
+          Text('$mm:$ss left',
+              style: TextStyle(
+                  color: onColor, fontSize: 13, fontWeight: FontWeight.w600)),
         ],
       ),
     );
