@@ -40,6 +40,47 @@ class Wx {
     end: Alignment.bottomCenter,
   );
 
+  /// Live class-progress color, following the exact ramp:
+  ///
+  ///   #FF0000 → #FF5500 → #FFAA00 → #FFFF00 → #AAFF00 → #55FF00 → #00FF00
+  ///
+  /// i.e. RED (just started) → ORANGE → YELLOW (halfway) → GREEN (about to end).
+  /// It's a continuous piecewise-linear RGB interpolation, not 7 hard steps —
+  /// for the first half red stays full while green ramps up; for the second half
+  /// green stays full while red ramps down. Every tiny change in progress nudges
+  /// the color, which is what makes the per-second sweep look fluid.
+  static Color progressColor(double t) {
+    final x = t.isNaN ? 0.0 : t.clamp(0.0, 1.0);
+    final int r, g;
+    if (x <= 0.5) {
+      r = 255;
+      g = (510 * x).round(); // 0 → 255 over the first half
+    } else {
+      r = (255 - 510 * (x - 0.5)).round(); // 255 → 0 over the second half
+      g = 255;
+    }
+    return Color.fromARGB(255, r.clamp(0, 255), g.clamp(0, 255), 0);
+  }
+
+  /// Card gradient for an in-progress class — a darkened sheen of the live
+  /// [progressColor]. It's deepened so the white type stays readable on the
+  /// lighter parts of the ramp (yellow/green) while the red→green hue still
+  /// reads clearly. The pure ramp color is used for the bars/rings/stripes.
+  static LinearGradient progressGradient(double t) {
+    final hsl = HSLColor.fromColor(progressColor(t));
+    final top = hsl.withLightness((hsl.lightness * 0.62).clamp(0.0, 1.0))
+        .withSaturation(1)
+        .toColor();
+    final bottom = hsl.withLightness((hsl.lightness * 0.42).clamp(0.0, 1.0))
+        .withSaturation(1)
+        .toColor();
+    return LinearGradient(
+      colors: [top, bottom],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+    );
+  }
+
   /// 12-hour "8:30" (compact).
   static String hm(int minutes) {
     final h = minutes ~/ 60;

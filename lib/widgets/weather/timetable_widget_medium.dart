@@ -28,14 +28,15 @@ class TimetableWidgetMedium extends StatelessWidget {
   Widget build(BuildContext context) {
     final rows = status.currentPlusNext(4);
     final current = status.currentIsClass ? status.current : null;
-    final accent = current?.color;
 
     return WeatherCard(
       width: width,
       height: height,
       elevated: elevated,
-      gradient:
-          accent != null ? Wx.subjectGradient(accent) : Wx.neutralGradient,
+      // In-progress class → live red→yellow→green sweep; otherwise neutral.
+      gradient: current != null
+          ? Wx.progressGradient(status.completion)
+          : Wx.neutralGradient,
       padding: const EdgeInsets.fromLTRB(18, 16, 16, 16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

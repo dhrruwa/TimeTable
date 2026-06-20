@@ -8,6 +8,9 @@ import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.res.ColorStateList
+import android.graphics.Color
+import android.os.Build
 import android.view.View
 import android.widget.RemoteViews
 import org.json.JSONObject
@@ -85,6 +88,8 @@ object WidgetRenderer {
         val cal = Calendar.getInstance()
         val weekday = isoWeekday(cal)
         val minutes = cal.get(Calendar.HOUR_OF_DAY) * 60 + cal.get(Calendar.MINUTE)
+        val nowSec = cal.get(Calendar.HOUR_OF_DAY) * 3600 +
+            cal.get(Calendar.MINUTE) * 60 + cal.get(Calendar.SECOND)
 
         v.setTextViewText(R.id.w_day, DAYS[(weekday - 1).coerceIn(0, 6)])
         v.setTextViewText(
@@ -131,9 +136,67 @@ object WidgetRenderer {
             }
         }
 
-        if (variant == Variant.LARGE) fillList(context, v, today, minutes)
+        if (variant == Variant.LARGE) {
+            fillList(context, v, today, minutes)
+        } else {
+            // Compact (small/medium): show the live % complete + the next two
+            // classes. These view ids only exist in the compact layout.
+            setCompactExtras(v, today, minutes, nowSec)
+        }
 
         mgr.updateAppWidget(id, v)
+    }
+
+    /** Live % complete (tinted on the red→green ramp) + the next two classes. */
+    private fun setCompactExtras(v: RemoteViews, today: List<Entry>, minutes: Int, nowSec: Int) {
+        val cur = today.firstOrNull { minutes >= it.s && minutes < it.e && !it.isBreak }
+        if (cur != null) {
+            val total = ((cur.e - cur.s) * 60).coerceAtLeast(1)
+            val done = (nowSec - cur.s * 60).coerceIn(0, total)
+            val frac = done.toFloat() / total
+            val color = progressColor(frac)
+            v.setTextViewText(R.id.w_pct, "${(frac * 100).toInt()}%")
+            v.setTextColor(R.id.w_pct, color)
+            v.setViewVisibility(R.id.w_pct, View.VISIBLE)
+            if (Build.VERSION.SDK_INT >= 31) {
+                v.setColorStateList(
+                    R.id.w_progress, "setProgressTintList", ColorStateList.valueOf(color),
+                )
+            }
+        } else {
+            v.setViewVisibility(R.id.w_pct, View.GONE)
+        }
+
+        val upcoming = today.filter { !it.isBreak && it.s > minutes }
+        setUpcoming(v, R.id.w_next, "Next", upcoming.getOrNull(0))
+        setUpcoming(v, R.id.w_after, "Then", upcoming.getOrNull(1))
+    }
+
+    private fun setUpcoming(v: RemoteViews, id: Int, label: String, e: Entry?) {
+        if (e == null) {
+            v.setViewVisibility(id, View.GONE)
+        } else {
+            v.setTextViewText(id, "$label · ${e.title} · ${hm(e.s)}${roomSuffix(e.room)}")
+            v.setViewVisibility(id, View.VISIBLE)
+        }
+    }
+
+    /**
+     * The shared red→green ramp, matching the Flutter `Wx.progressColor`:
+     * #FF0000 → #FF5500 → #FFAA00 → #FFFF00 → #AAFF00 → #55FF00 → #00FF00.
+     */
+    fun progressColor(t: Float): Int {
+        val x = t.coerceIn(0f, 1f)
+        val r: Int
+        val g: Int
+        if (x <= 0.5f) {
+            r = 255
+            g = (510 * x).toInt()
+        } else {
+            r = (255 - 510 * (x - 0.5f)).toInt()
+            g = 255
+        }
+        return Color.rgb(r.coerceIn(0, 255), g.coerceIn(0, 255), 0)
     }
 
     private fun setBody(v: RemoteViews, status: String, title: String, subtitle: String) {

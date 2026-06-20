@@ -167,6 +167,11 @@ class _ClassRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = Color(entry.color);
+    // While this row is the current class, its stripe, tint and bar take the
+    // live red→yellow→green progress color; otherwise the subject color.
+    final liveColor = (highlighted && completion != null)
+        ? Wx.progressColor(completion!)
+        : color;
     final subtitle = [
       if (entry.teacher != null && entry.teacher!.isNotEmpty) entry.teacher!,
       if (entry.room != null && entry.room!.isNotEmpty) entry.room!,
@@ -178,7 +183,7 @@ class _ClassRow extends StatelessWidget {
           width: 4,
           height: 34,
           decoration: BoxDecoration(
-              color: color, borderRadius: BorderRadius.circular(2)),
+              color: liveColor, borderRadius: BorderRadius.circular(2)),
         ),
         const SizedBox(width: 10),
         SizedBox(
@@ -240,7 +245,7 @@ class _ClassRow extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 5),
       padding: const EdgeInsets.fromLTRB(8, 8, 12, 9),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.28),
+        color: liveColor.withValues(alpha: 0.30),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -254,7 +259,7 @@ class _ClassRow extends StatelessWidget {
                 value: completion,
                 minHeight: 4,
                 backgroundColor: Colors.white.withValues(alpha: 0.25),
-                valueColor: const AlwaysStoppedAnimation(Colors.white),
+                valueColor: AlwaysStoppedAnimation(liveColor),
               ),
             ),
           ],

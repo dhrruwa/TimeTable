@@ -134,10 +134,15 @@ class TodayEngine {
       }
     }
 
+    // Seconds-precise so the live progress (and the red→green widget color it
+    // drives) advances smoothly every second, not in once-a-minute jumps. With
+    // seconds == 0 this matches the old minute-based value exactly.
     double completion = 0;
     if (current != null && current.isClass && current.durationMin > 0) {
+      final nowSec = now.hour * 3600 + now.minute * 60 + now.second;
       completion =
-          ((m - current.startMin) / current.durationMin).clamp(0.0, 1.0);
+          ((nowSec - current.startMin * 60) / (current.durationMin * 60))
+              .clamp(0.0, 1.0);
     }
 
     final beforeDay = m < timeline.first.startMin;

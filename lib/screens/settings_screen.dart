@@ -6,6 +6,7 @@ import '../providers/providers.dart';
 import '../providers/widget_providers.dart';
 import '../widgets/dhrruwa_footer.dart';
 import '../widgets/time_utils.dart';
+import '../widgets/weather/live_widget_preview.dart';
 
 /// Configure the bell schedule (day start, durations, break positions) and the
 /// app theme. Changes recompute every screen + the widgets instantly.
@@ -38,6 +39,17 @@ class SettingsScreen extends ConsumerWidget {
                     )),
           ),
           _PeriodPreviewStrip(cfg: config),
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+            child: Text('WIDGET COLOR — LIVE',
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.6,
+                    )),
+          ),
+          const LiveWidgetPreview(),
           if (lunchInvalid)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),

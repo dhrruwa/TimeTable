@@ -31,9 +31,11 @@ class TimetableWidgetSmall extends StatelessWidget {
       width: size,
       height: size,
       elevated: elevated,
-      gradient: h.accentColor != null
-          ? Wx.subjectGradient(h.accentColor!)
-          : Wx.neutralGradient,
+      gradient: h.liveProgress != null
+          ? Wx.progressGradient(h.liveProgress!)
+          : (h.accentColor != null
+              ? Wx.subjectGradient(h.accentColor!)
+              : Wx.neutralGradient),
       padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -127,8 +129,13 @@ class _Head {
   final IconData icon;
   final int? accentColor;
 
+  /// When non-null, a class is in progress and the card uses the live
+  /// red→yellow→green [Wx.progressGradient] driven by this 0..1 fraction.
+  final double? liveProgress;
+
   const _Head(this.title, this.sub, this.ring, this.showRing, this.icon,
-      this.accentColor);
+      this.accentColor,
+      {this.liveProgress});
 
   factory _Head.from(TodayStatus s) {
     if (s.empty) {
@@ -158,7 +165,8 @@ class _Head {
     }
     if (s.currentIsClass && c != null) {
       return _Head(c.title, '${s.completionPercent}% complete', s.completion,
-          true, Icons.school, c.color);
+          true, Icons.school, c.color,
+          liveProgress: s.completion);
     }
     if (s.upcomingClasses.isNotEmpty) {
       final n = s.upcomingClasses.first;
