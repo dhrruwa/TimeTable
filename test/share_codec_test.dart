@@ -1,7 +1,33 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:timetable/data/sample_week.dart';
 import 'package:timetable/logic/share_codec.dart';
 import 'package:timetable/models/period_models.dart';
+
+/// An ID-independent fingerprint of a timetable. The compact share format
+/// intentionally drops the random per-row UUIDs and regenerates them on decode
+/// (they don't compress, so keeping them overflowed QR codes — see ShareCodec).
+/// So a faithful round-trip preserves everything *except* the ids; we compare
+/// subjects by name+color and periods by their resolved subject + details.
+String _fingerprint(Timetable t) {
+  String subjectName(String id) =>
+      t.subjects.firstWhere((s) => s.id == id).name;
+  return jsonEncode({
+    'subjects': [
+      for (final s in t.subjects) [s.name, s.color],
+    ],
+    'config': t.config.toJson(),
+    'meta': t.meta.toJson(),
+    'week': {
+      for (final day in t.week.keys.toList()..sort())
+        '$day': [
+          for (final p in t.week[day]!)
+            [subjectName(p.subjectId), p.room, p.teacher, p.isLab],
+        ],
+    },
+  });
+}
 
 void main() {
   test('encode -> link -> decode round-trips the full timetable', () {
@@ -34,7 +60,8 @@ void main() {
     expect(decoded.meta.verified, isTrue);
     expect(decoded.subjects.length, original.subjects.length);
     expect(decoded.week.length, original.week.length);
-    expect(decoded.toJsonString(), original.toJsonString());
+    // Everything survives except the deliberately-regenerated ids.
+    expect(_fingerprint(decoded), _fingerprint(original));
 
     // Print the link + size so we can eyeball it.
     // ignore: avoid_print
