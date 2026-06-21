@@ -1,14 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Calendar, Lock, LogOut, ArrowRight, Download, Users, RefreshCw, AlertTriangle, ShieldCheck, Mail, ArrowLeft, Database, MessageSquare } from 'lucide-react';
+import { Calendar, Lock, LogOut, ArrowRight, Download, RefreshCw, AlertTriangle, ShieldCheck, Mail, ArrowLeft, Database, MessageSquare } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface Stats {
   totalDownloads: number;
-  activeStudents: number;
-  timetablesCreated: number;
-  classesTracked: number;
+  subscribers: number;
+  supportMessages: number;
+  downloads7d: number;
 }
 
 interface Subscriber {
@@ -40,9 +40,9 @@ export default function AdminDashboard() {
 
   const [stats, setStats] = useState<Stats>({
     totalDownloads: 0,
-    activeStudents: 0,
-    timetablesCreated: 0,
-    classesTracked: 0,
+    subscribers: 0,
+    supportMessages: 0,
+    downloads7d: 0,
   });
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [supportMessages, setSupportMessages] = useState<SupportMessage[]>([]);
@@ -113,12 +113,17 @@ export default function AdminDashboard() {
   };
 
   const handleLogout = async () => {
-    // Clear session by writing a route or locally. 
-    document.cookie = 'classsync_admin_session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    // The session cookie is httpOnly, so it MUST be cleared server-side.
+    try {
+      await fetch('/api/admin/logout', { method: 'POST' });
+    } catch {
+      // ignore network errors — we still reset local state below
+    }
     setIsLoggedIn(false);
     setSubscribers([]);
     setSupportMessages([]);
     setChartData([]);
+    setStats({ totalDownloads: 0, subscribers: 0, supportMessages: 0, downloads7d: 0 });
   };
 
   const handleRefresh = async () => {
@@ -401,31 +406,31 @@ export default function AdminDashboard() {
 
           <div className="glass p-6 rounded-2xl border border-slate-200 bg-white shadow-2xs flex items-start gap-4 text-left">
             <div className="p-3 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-500">
-              <Users className="w-5.5 h-5.5" />
+              <Mail className="w-5.5 h-5.5" />
             </div>
             <div>
-              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Active Students</span>
-              <span className="text-2xl font-bold text-slate-900 font-mono mt-1 block">{stats.activeStudents}</span>
+              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Newsletter Subscribers</span>
+              <span className="text-2xl font-bold text-slate-900 font-mono mt-1 block">{stats.subscribers}</span>
             </div>
           </div>
 
           <div className="glass p-6 rounded-2xl border border-slate-200 bg-white shadow-2xs flex items-start gap-4 text-left">
             <div className="p-3 rounded-xl bg-purple-50 border border-purple-100 text-purple-500">
-              <Calendar className="w-5.5 h-5.5" />
+              <MessageSquare className="w-5.5 h-5.5" />
             </div>
             <div>
-              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Schedules Created</span>
-              <span className="text-2xl font-bold text-slate-900 font-mono mt-1 block">{stats.timetablesCreated}</span>
+              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Support Messages</span>
+              <span className="text-2xl font-bold text-slate-900 font-mono mt-1 block">{stats.supportMessages}</span>
             </div>
           </div>
 
           <div className="glass p-6 rounded-2xl border border-slate-200 bg-white shadow-2xs flex items-start gap-4 text-left">
             <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-500">
-              <Database className="w-5.5 h-5.5" />
+              <Calendar className="w-5.5 h-5.5" />
             </div>
             <div>
-              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Classes Tracked</span>
-              <span className="text-2xl font-bold text-slate-900 font-mono mt-1 block">{stats.classesTracked}</span>
+              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Downloads (7 days)</span>
+              <span className="text-2xl font-bold text-slate-900 font-mono mt-1 block">{stats.downloads7d}</span>
             </div>
           </div>
         </div>
