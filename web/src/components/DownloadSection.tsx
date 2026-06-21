@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowDownToLine, CheckCircle2, ShieldCheck, Mail, Smartphone, Download, User } from 'lucide-react';
+import GsapReveal from './GsapReveal';
+import GsapHeading from './GsapHeading';
 import { getDownloadCount, trackDownload, subscribeNewsletter } from '../lib/db';
 import confetti from 'canvas-confetti';
 
@@ -164,12 +166,14 @@ export default function DownloadSection() {
 
           {/* Right Column: Download Form Content (Zomato Form Style) */}
           <div className="lg:col-span-7 text-left space-y-6 order-1 lg:order-2 max-w-xl mx-auto lg:mx-0">
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-              Get the ClassSync App
-            </h2>
-            <p className="text-slate-600 text-sm sm:text-base leading-relaxed font-semibold">
-              Sideload the stable Android APK directly or register with your email address to receive official App Store and Google Play release notifications.
-            </p>
+            <GsapReveal className="space-y-6">
+              <GsapHeading as="h2" className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+                Get the ClassSync App
+              </GsapHeading>
+              <p className="text-slate-600 text-sm sm:text-base leading-relaxed font-semibold">
+                Sideload the stable Android APK directly or register with your email address to receive official App Store and Google Play release notifications.
+              </p>
+            </GsapReveal>
 
             {/* Selector: Email vs Direct Link */}
             <div className="flex items-center gap-6 text-sm text-slate-600 font-bold select-none">

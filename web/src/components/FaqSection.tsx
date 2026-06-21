@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, LifeBuoy } from 'lucide-react';
+import GsapHeading from './GsapHeading';
 
 const faqs = [
   {
@@ -37,9 +38,9 @@ export default function FaqSection() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-left">
 
         {/* Section Header */}
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mb-8">
+        <GsapHeading as="h2" className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mb-8">
           Frequently asked questions
-        </h2>
+        </GsapHeading>
 
         {/* FAQ Accordions */}
         <div className="space-y-4">

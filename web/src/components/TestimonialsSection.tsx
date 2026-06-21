@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Quote, MessageSquare, Star } from 'lucide-react';
+import GsapReveal from './GsapReveal';
+import GsapHeading from './GsapHeading';
 
 const testimonials = [
   {
@@ -54,14 +56,14 @@ export default function TestimonialsSection() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
         
         {/* Section Header */}
-        <div className="flex flex-col items-center gap-4 mb-12">
+        <GsapReveal className="flex flex-col items-center gap-4 mb-12">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-600 text-xs font-bold">
             <MessageSquare className="w-3.5 h-3.5" /> Peer Feedback
           </span>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+          <GsapHeading as="h2" className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
             What Other Students Are Saying
-          </h2>
-        </div>
+          </GsapHeading>
+        </GsapReveal>
 
         {/* Testimonial Box */}
         <div className="min-h-[220px] relative flex items-center justify-center">

@@ -3,6 +3,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Clock, AlertTriangle, ShieldAlert, FileText, Sparkles, MessageSquare, AlertOctagon, HelpCircle, ArrowRight } from 'lucide-react';
+import GsapReveal from './GsapReveal';
+import GsapHeading from './GsapHeading';
 
 // Bento Micro-Graphics for student pain points
 
@@ -135,17 +137,17 @@ export default function ProblemSection() {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-20 space-y-4">
+        <GsapReveal className="text-center max-w-3xl mx-auto mb-20 space-y-4">
           <h2 className="text-xs uppercase tracking-widest text-rose-600 font-bold flex items-center justify-center gap-1.5">
             <AlertOctagon className="w-3.5 h-3.5" /> The Struggle is Real
           </h2>
-          <h3 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+          <GsapHeading as="h3" className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
             A Day in the Life of a Student
-          </h3>
+          </GsapHeading>
           <p className="text-slate-600 text-sm sm:text-base font-semibold">
             Being in college is busy enough. Struggling with a simple daily schedule shouldn't be part of the stress.
           </p>
-        </div>
+        </GsapReveal>
 
         {/* Timeline Stack */}
         <div className="relative border-l-2 border-slate-200 ml-4 sm:ml-6 md:ml-32 space-y-12 text-left">

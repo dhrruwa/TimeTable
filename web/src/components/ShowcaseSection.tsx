@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, LayoutDashboard, Percent, User, ArrowRight, ArrowLeft, Star, Volume2, Share2, BellRing, Check, ShieldAlert } from 'lucide-react';
+import GsapReveal from './GsapReveal';
+import GsapHeading from './GsapHeading';
 
 type ScreenType = 'dashboard' | 'timetable' | 'attendance' | 'profile';
 
@@ -55,17 +57,17 @@ export default function ShowcaseSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
+        <GsapReveal className="text-center max-w-3xl mx-auto mb-16 space-y-4">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-50 border border-sky-200 text-sky-600 text-xs font-bold">
             <Star className="w-3.5 h-3.5 fill-sky-400/20" /> Design Showcase
           </span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+          <GsapHeading as="h2" className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
             Explore The ClassSync App Interface
-          </h2>
+          </GsapHeading>
           <p className="text-slate-600 text-base sm:text-lg">
             Interact with our simulated app screen to see how easily you can navigate schedules and attendance tracking.
           </p>
-        </div>
+        </GsapReveal>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           

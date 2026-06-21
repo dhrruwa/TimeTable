@@ -3,6 +3,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle2, LayoutDashboard, Compass, Layers, ShieldCheck, Activity } from 'lucide-react';
+import GsapReveal from './GsapReveal';
+import GsapHeading from './GsapHeading';
 
 const solutions = [
   { label: 'Current Period', desc: 'Instantly view which class is running and where.' },
@@ -23,17 +25,17 @@ export default function SolutionSection() {
           
           {/* Left Side: Information */}
           <div className="lg:col-span-6 space-y-8 text-left">
-            <div className="space-y-4">
+            <GsapReveal className="space-y-4">
               <h2 className="text-xs uppercase tracking-widest text-sky-600 font-bold flex items-center gap-1.5">
                 <Compass className="w-3.5 h-3.5 animate-spin-slow" /> Smart Integration
               </h2>
-              <h3 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+              <GsapHeading as="h3" className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
                 Built By Students, For Students
-              </h3>
+              </GsapHeading>
               <p className="text-slate-600 text-base sm:text-lg leading-relaxed font-light">
                 As engineering students, we got tired of hunting down timing details and room numbers. This application automatically tracks your timetable and helps you instantly know everything at a single glance.
               </p>
-            </div>
+            </GsapReveal>
 
             {/* Checklist */}
             <div className="space-y-4">

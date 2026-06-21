@@ -1,16 +1,40 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
+import { gsap } from 'gsap';
 import { Clock } from 'lucide-react';
 
-const questions = [
-  <span key="current-class">What <span className="bg-gradient-to-r from-sky-500 via-sky-600 to-indigo-600 bg-clip-text text-transparent font-extrabold">class</span> is running right now?</span>,
-  <span key="next-period">What is your <span className="bg-gradient-to-r from-sky-500 via-sky-600 to-indigo-600 bg-clip-text text-transparent font-extrabold">next period</span>?</span>,
-  <span key="tomorrow-morning">Which subject do you have <span className="bg-gradient-to-r from-sky-500 via-sky-600 to-indigo-600 bg-clip-text text-transparent font-extrabold">tomorrow morning</span>?</span>,
-  <span key="daily-progress">How much of today’s classes are <span className="bg-gradient-to-r from-sky-500 via-sky-600 to-indigo-600 bg-clip-text text-transparent font-extrabold">already completed</span>?</span>,
-  <span key="attendance">Are you sure your attendance percentage is <span className="bg-gradient-to-r from-sky-500 via-sky-600 to-indigo-600 bg-clip-text text-transparent font-extrabold">safe</span>?</span>
+// useLayoutEffect on the client (so words are positioned before paint, no
+// flash), but fall back to useEffect during SSR to avoid React's warning.
+const useIsomorphicLayoutEffect =
+  typeof window !== 'undefined' ? useLayoutEffect : useEffect;
+
+const GRADIENT =
+  'bg-gradient-to-r from-sky-500 via-sky-600 to-indigo-600 bg-clip-text text-transparent font-extrabold';
+
+// Each question is a list of segments; `hl` segments get the gradient. Storing
+// them as data (rather than JSX) lets us split into per-word spans for GSAP.
+type Segment = { text: string; hl?: boolean };
+
+const QUESTIONS: Segment[][] = [
+  [{ text: 'What ' }, { text: 'class', hl: true }, { text: ' is running right now?' }],
+  [{ text: 'What is your ' }, { text: 'next period', hl: true }, { text: '?' }],
+  [{ text: 'Which subject do you have ' }, { text: 'tomorrow morning', hl: true }, { text: '?' }],
+  [{ text: 'How much of today’s classes are ' }, { text: 'already completed', hl: true }, { text: '?' }],
+  [{ text: 'Are you sure your attendance percentage is ' }, { text: 'safe', hl: true }, { text: '?' }],
 ];
+
+// Flatten a question into word tokens (keeping the surrounding whitespace) so
+// each word can be a single inline-block GSAP target.
+function toWords(segments: Segment[]): { token: string; hl: boolean }[] {
+  const words: { token: string; hl: boolean }[] = [];
+  for (const seg of segments) {
+    const tokens = seg.text.match(/\s*\S+\s*/g) ?? [];
+    for (const token of tokens) words.push({ token, hl: !!seg.hl });
+  }
+  return words;
+}
 
 export default function HeroSection() {
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
@@ -19,6 +43,7 @@ export default function HeroSection() {
   const isFirstQuestionRef = useRef(true);
   const heroRef = useRef<HTMLElement | null>(null);
   const isHeroVisibleRef = useRef(true);
+  const headlineRef = useRef<HTMLHeadingElement | null>(null);
   
   // Live clock updater
   useEffect(() => {
@@ -31,13 +56,55 @@ export default function HeroSection() {
     return () => clearInterval(interval);
   }, []);
 
-  // Sliding questions index updater
-  useEffect(() => {
-    const questionInterval = setInterval(() => {
-      setCurrentQuestionIdx((prev) => (prev + 1) % questions.length);
-    }, 3000);
-    return () => clearInterval(questionInterval);
-  }, []);
+  // GSAP word-cascade: for each question the words flip/slide IN with a stagger,
+  // hold, then fly OUT — and on completion we advance to the next question,
+  // which re-runs this effect for a seamless loop.
+  useIsomorphicLayoutEffect(() => {
+    const headline = headlineRef.current;
+    if (!headline) return;
+
+    const words = gsap.utils.toArray<HTMLElement>('.hero-word', headline);
+    const next = () =>
+      setCurrentQuestionIdx((prev) => (prev + 1) % QUESTIONS.length);
+
+    const reduceMotion =
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+    if (reduceMotion || words.length === 0) {
+      // Honor reduced-motion: no movement, just hold and advance.
+      const hold = window.setTimeout(next, 3200);
+      return () => window.clearTimeout(hold);
+    }
+
+    const ctx = gsap.context(() => {
+      gsap.set(words, { transformOrigin: '50% 100%' });
+      const tl = gsap.timeline({ onComplete: next });
+      tl.from(words, {
+        yPercent: 120,
+        opacity: 0,
+        rotateX: -90,
+        filter: 'blur(8px)',
+        duration: 0.7,
+        ease: 'back.out(1.5)',
+        stagger: 0.05,
+      });
+      tl.to(
+        words,
+        {
+          yPercent: -120,
+          opacity: 0,
+          rotateX: 90,
+          filter: 'blur(8px)',
+          duration: 0.45,
+          ease: 'power2.in',
+          stagger: 0.03,
+        },
+        '+=2.1', // hold the fully-revealed question before it leaves
+      );
+    }, headline);
+
+    return () => ctx.revert();
+  }, [currentQuestionIdx]);
 
   useEffect(() => {
     const hero = heroRef.current;
@@ -210,23 +277,22 @@ export default function HeroSection() {
           className="h-[315px] sm:h-[386px] md:h-[443px] lg:h-[386px] flex items-center justify-center overflow-hidden relative w-full"
           style={{ perspective: 1200 }}
         >
-          <AnimatePresence mode="wait">
-            <motion.h1 
-              key={currentQuestionIdx}
-              initial={{ opacity: 0, y: 30, scale: 0.96, rotateX: -12 }}
-              animate={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
-              exit={{ opacity: 0, y: -30, scale: 0.96, rotateX: 12 }}
-              transition={{ 
-                type: "spring",
-                stiffness: 110,
-                damping: 16,
-                opacity: { duration: 0.2 }
-              }}
-              className="w-full max-w-4xl px-4 text-center text-[47px] sm:text-[62px] md:text-[78px] lg:text-[94px] font-extrabold text-slate-900 tracking-tight leading-snug select-none"
-            >
-              {questions[currentQuestionIdx]}
-            </motion.h1>
-          </AnimatePresence>
+          <h1
+            ref={headlineRef}
+            key={currentQuestionIdx}
+            style={{ transformStyle: 'preserve-3d' }}
+            className="w-full max-w-4xl px-4 text-center text-[47px] sm:text-[62px] md:text-[78px] lg:text-[94px] font-extrabold text-slate-900 tracking-tight leading-snug select-none"
+          >
+            {toWords(QUESTIONS[currentQuestionIdx]).map((w, i) => (
+              <span
+                key={i}
+                className={`hero-word inline-block ${w.hl ? GRADIENT : ''}`}
+                style={{ whiteSpace: 'pre' }}
+              >
+                {w.token}
+              </span>
+            ))}
+          </h1>
         </div>
 
         {/* Static Marketing Subheadline */}

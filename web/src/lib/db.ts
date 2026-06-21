@@ -43,7 +43,7 @@ export async function trackDownload(): Promise<boolean> {
       if (!error) {
         tracked = true;
       } else {
-        console.error('Supabase download logging failed:', error);
+        console.warn('Supabase download logging failed, using local fallback:', error.message ?? error);
       }
     } catch (err) {
       console.error('Supabase download error:', err);
@@ -66,7 +66,11 @@ export async function getDownloadCount(): Promise<number> {
       if (!error && count !== null) {
         return count;
       }
-      console.error('Supabase download count failed:', error);
+      // Not fatal — fall through to the local count. Only note a real error
+      // (a null count with no error just means there's nothing to report yet).
+      if (error) {
+        console.warn('Supabase download count unavailable, using local fallback:', error.message ?? error);
+      }
     } catch (err) {
       console.error('Supabase download count error:', err);
     }

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Calendar, Globe, Heart, Shield, RefreshCw } from 'lucide-react';
+import GsapReveal from './GsapReveal';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -44,7 +45,7 @@ export default function Footer() {
         </div>
 
         {/* Link Columns Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 text-left">
+        <GsapReveal className="grid grid-cols-2 md:grid-cols-5 gap-8 text-left" y={20} stagger={0.08}>
           
           {/* Col 1 */}
           <div className="space-y-4">
@@ -146,7 +147,7 @@ export default function Footer() {
 
           </div>
 
-        </div>
+        </GsapReveal>
 
         {/* Bottom fine print */}
         <div className="border-t border-slate-200 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">

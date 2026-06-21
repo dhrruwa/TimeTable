@@ -3,6 +3,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Database, Cloud, Bell, Clock, Percent, ShieldCheck } from 'lucide-react';
+import GsapReveal from './GsapReveal';
+import GsapHeading from './GsapHeading';
 
 // Bento Micro-Graphics
 
@@ -132,12 +134,12 @@ export default function FeaturesSection() {
           
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-            <div className="space-y-2">
-              <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Collections</h2>
+            <GsapReveal className="space-y-2">
+              <GsapHeading as="h2" className="text-3xl font-extrabold text-slate-900 tracking-tight">Collections</GsapHeading>
               <p className="text-slate-600 text-sm font-semibold">
                 Explore curated options, styles, and tools that enhance your schedule layouts.
               </p>
-            </div>
+            </GsapReveal>
             <button 
               onClick={() => scrollToSection('showcase')}
               className="text-xs text-sky-500 hover:text-sky-600 font-bold flex items-center gap-1 shrink-0 cursor-pointer"
