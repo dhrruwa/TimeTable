@@ -110,11 +110,9 @@ class TimetableWidgetLarge extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(weekday,
-                style:
-                    const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+            Text(weekday, style: Wx.titleLg.copyWith(fontSize: 17)),
             const SizedBox(height: 2),
-            Text(date, style: TextStyle(fontSize: 12, color: Wx.text70)),
+            Text(date, style: Wx.caption.copyWith(fontSize: 12)),
           ],
         ),
         const Spacer(),
@@ -126,7 +124,7 @@ class TimetableWidgetLarge extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (accent != null) ...[
-                    SubjectDot(accent, size: 8),
+                    SubjectDot(accent, size: 8, glow: true),
                     const SizedBox(width: 5),
                   ],
                   Flexible(
@@ -134,13 +132,12 @@ class TimetableWidgetLarge extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.right,
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600)),
+                        style: Wx.titleMd.copyWith(fontSize: 16)),
                   ),
                 ],
               ),
               const SizedBox(height: 2),
-              Text(sub, style: TextStyle(fontSize: 12, color: Wx.text70)),
+              Text(sub, style: Wx.caption.copyWith(fontSize: 12)),
             ],
           ),
         ),
@@ -183,7 +180,7 @@ class _ClassRow extends StatelessWidget {
           width: 4,
           height: 34,
           decoration: BoxDecoration(
-              color: liveColor, borderRadius: BorderRadius.circular(2)),
+              color: liveColor, borderRadius: BorderRadius.circular(Wx.radiusChip)),
         ),
         const SizedBox(width: 10),
         SizedBox(
@@ -191,11 +188,9 @@ class _ClassRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(Wx.hm(entry.startMin),
-                  style: const TextStyle(
-                      fontSize: 13.5, fontWeight: FontWeight.w600)),
+              Text(Wx.hm(entry.startMin), style: Wx.titleMd.copyWith(fontSize: 13.5)),
               Text(Wx.hm(entry.endMin),
-                  style: TextStyle(fontSize: 11, color: Wx.text55)),
+                  style: Wx.caption.copyWith(fontSize: 11, color: Wx.text55)),
             ],
           ),
         ),
@@ -210,10 +205,9 @@ class _ClassRow extends StatelessWidget {
                     child: Text(entry.title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w600)),
+                        style: Wx.titleMd.copyWith(fontSize: 14)),
                   ),
-                  if (entry.isLab) const _Tag('LAB'),
+                  if (entry.isLab) const LabTag('LAB'),
                 ],
               ),
               if (subtitle.isNotEmpty)
@@ -222,15 +216,12 @@ class _ClassRow extends StatelessWidget {
                   child: Text(subtitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 11, color: Wx.text70)),
+                      style: Wx.caption.copyWith(fontSize: 11)),
                 ),
             ],
           ),
         ),
-        if (percent != null)
-          Text('$percent%',
-              style:
-                  const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+        if (percent != null) Text('$percent%', style: Wx.pctLg),
       ],
     );
 
@@ -245,21 +236,20 @@ class _ClassRow extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 5),
       padding: const EdgeInsets.fromLTRB(8, 8, 12, 9),
       decoration: BoxDecoration(
-        color: liveColor.withValues(alpha: 0.30),
-        borderRadius: BorderRadius.circular(12),
+        color: liveColor.withValues(alpha: 0.22),
+        borderRadius: BorderRadius.circular(Wx.radiusInner),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.10), width: 0.5),
       ),
       child: Column(
         children: [
           content,
           if (completion != null) ...[
             const SizedBox(height: 8),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(3),
-              child: LinearProgressIndicator(
-                value: completion,
-                minHeight: 4,
-                backgroundColor: Colors.white.withValues(alpha: 0.25),
-                valueColor: AlwaysStoppedAnimation(liveColor),
+            ProgressBarRx(
+              value: completion!,
+              height: 5,
+              fillGradient: LinearGradient(
+                colors: [liveColor, liveColor.withValues(alpha: 0.75)],
               ),
             ),
           ],
@@ -286,31 +276,9 @@ class _BreakRow extends StatelessWidget {
           Icon(icon, size: 13, color: Wx.text70),
           const SizedBox(width: 6),
           Text('${entry.title}  ·  ${Wx.range(entry.startMin, entry.endMin)}',
-              style: TextStyle(
-                  fontSize: 11.5,
-                  color: Wx.text70,
-                  fontWeight: FontWeight.w500)),
+              style: Wx.caption.copyWith(fontSize: 11.5)),
         ],
       ),
     );
   }
-}
-
-class _Tag extends StatelessWidget {
-  final String text;
-  const _Tag(this.text);
-  @override
-  Widget build(BuildContext context) => Container(
-        margin: const EdgeInsets.only(left: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.22),
-          borderRadius: BorderRadius.circular(4),
-        ),
-        child: Text(text,
-            style: const TextStyle(
-                fontSize: 8.5,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.5)),
-      );
 }

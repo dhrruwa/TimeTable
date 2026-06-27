@@ -190,7 +190,7 @@ class _Ramp extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(8),
         child: SizedBox(
           height: 10,
           child: Row(

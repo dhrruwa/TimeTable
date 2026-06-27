@@ -17,7 +17,7 @@
             android:id="@+id/w_day"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#1A1A1A"
+            android:textColor="#FFFFFFFF"
             android:textSize="15sp"
             android:textStyle="bold"
             android:text="Mon" />
@@ -27,28 +27,40 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="6dp"
-            android:textColor="#6B7280"
+            android:textColor="#B8C0CC"
             android:textSize="13sp"
             android:text="" />
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/w_status"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:textColor="#4F46E5"
-        android:textSize="11sp"
-        android:textStyle="bold"
-        android:letterSpacing="0.06"
-        android:text="IN PROGRESS" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/w_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/widget_pill"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp"
+            android:textColor="#FFFFFFFF"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.1"
+            android:text="IN PROGRESS" />
+    </LinearLayout>
 
     <TextView
         android:id="@+id/w_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:textColor="#1A1A1A"
+        android:layout_marginTop="6dp"
+        android:textColor="#FFFFFFFF"
         android:textSize="20sp"
         android:textStyle="bold"
         android:maxLines="2"
@@ -60,7 +72,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
-        android:textColor="#6B7280"
+        android:textColor="#B8C0CC"
         android:textSize="13sp"
         android:maxLines="1"
         android:ellipsize="end"
@@ -73,7 +85,8 @@
         android:layout_height="6dp"
         android:layout_marginTop="10dp"
         android:max="100"
-        android:progress="0" />
+        android:progress="0"
+        android:progressDrawable="@drawable/widget_bg_progress" />
 
     <!-- Divider. A plain <View> is NOT a supported RemoteViews type, so use a
          1dp LinearLayout (which is) to avoid the widget failing to inflate. -->
@@ -82,7 +95,7 @@
         android:layout_height="1dp"
         android:layout_marginTop="12dp"
         android:layout_marginBottom="6dp"
-        android:background="#E5E7EB" />
+        android:background="#29FFFFFF" />
 
     <LinearLayout
         android:id="@+id/w_list"

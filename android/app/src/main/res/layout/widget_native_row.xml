@@ -3,15 +3,15 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:paddingTop="5dp"
-    android:paddingBottom="5dp"
+    android:paddingTop="6dp"
+    android:paddingBottom="6dp"
     android:gravity="center_vertical">
 
     <TextView
         android:id="@+id/row_p"
         android:layout_width="34dp"
         android:layout_height="wrap_content"
-        android:textColor="#4F46E5"
+        android:textColor="#FFFFFFFF"
         android:textSize="12sp"
         android:textStyle="bold"
         android:text="P1" />
@@ -26,7 +26,7 @@
             android:id="@+id/row_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#1A1A1A"
+            android:textColor="#FFFFFFFF"
             android:textSize="14sp"
             android:maxLines="1"
             android:ellipsize="end"
@@ -36,7 +36,7 @@
             android:id="@+id/row_time"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#6B7280"
+            android:textColor="#8A93A1"
             android:textSize="12sp"
             android:maxLines="1"
             android:ellipsize="end"

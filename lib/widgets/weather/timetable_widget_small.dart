@@ -42,11 +42,9 @@ class TimetableWidgetSmall extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(weekday,
-                  style: const TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w700)),
+              Text(weekday.toUpperCase(), style: Wx.overline.copyWith(color: Wx.text)),
               const Spacer(),
-              Text(date, style: TextStyle(fontSize: 11, color: Wx.text70)),
+              Text(date, style: Wx.caption),
             ],
           ),
           const SizedBox(height: 10),
@@ -57,9 +55,9 @@ class TimetableWidgetSmall extends StatelessWidget {
                   percent: h.ring,
                   size: 46,
                   stroke: 4.5,
-                  center: Text('${(h.ring * 100).round()}%',
-                      style: const TextStyle(
-                          fontSize: 12, fontWeight: FontWeight.w700)),
+                  strokeColor:
+                      h.liveProgress != null ? Wx.progressColor(h.ring) : null,
+                  center: Text('${(h.ring * 100).round()}%', style: Wx.pctSm),
                 )
               else
                 Icon(h.icon, size: 30, color: Wx.text),
@@ -72,15 +70,12 @@ class TimetableWidgetSmall extends StatelessWidget {
                     Text(h.title,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontSize: 14.5,
-                            fontWeight: FontWeight.w600,
-                            height: 1.15)),
+                        style: Wx.titleMd.copyWith(fontSize: 14.5, height: 1.15)),
                     const SizedBox(height: 2),
                     Text(h.sub,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 10.5, color: Wx.text70)),
+                        style: Wx.caption.copyWith(fontSize: 10.5)),
                   ],
                 ),
               ),
@@ -90,27 +85,24 @@ class TimetableWidgetSmall extends StatelessWidget {
           const WxDivider(),
           const SizedBox(height: 8),
           if (next.isEmpty)
-            Text('No more classes',
-                style: TextStyle(fontSize: 11, color: Wx.text55))
+            Text('No more classes', style: Wx.caption.copyWith(color: Wx.text55))
           else
             for (final e in next)
               Padding(
                 padding: const EdgeInsets.only(bottom: 6),
                 child: Row(
                   children: [
-                    SubjectDot(e.color, size: 8),
+                    SubjectDot(e.color, size: 8, glow: true),
                     const SizedBox(width: 7),
                     SizedBox(
                       width: 34,
-                      child: Text(Wx.hm(e.startMin),
-                          style: TextStyle(fontSize: 11, color: Wx.text70)),
+                      child: Text(Wx.hm(e.startMin), style: Wx.caption),
                     ),
                     Expanded(
                       child: Text(e.title,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                              fontSize: 11.5, fontWeight: FontWeight.w500)),
+                          style: Wx.bodySm),
                     ),
                   ],
                 ),

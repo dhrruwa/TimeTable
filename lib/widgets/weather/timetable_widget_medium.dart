@@ -45,7 +45,7 @@ class TimetableWidgetMedium extends StatelessWidget {
           Container(
             width: 1,
             margin: const EdgeInsets.symmetric(horizontal: 14),
-            color: Wx.divider,
+            color: Wx.dividerStrong,
           ),
           Expanded(
             child: Column(
@@ -55,7 +55,7 @@ class TimetableWidgetMedium extends StatelessWidget {
                   Expanded(
                     child: Center(
                       child: Text('No upcoming classes',
-                          style: TextStyle(color: Wx.text70, fontSize: 13)),
+                          style: Wx.caption.copyWith(fontSize: 13)),
                     ),
                   )
                 else
@@ -79,58 +79,54 @@ class TimetableWidgetMedium extends StatelessWidget {
     final s = status;
     final String big;
     final String sub;
+    String? pill;
     if (s.empty) {
       big = 'No classes';
       sub = 'Enjoy the day off';
     } else if (s.beforeDay) {
       big = 'Day ahead';
       sub = 'Starts ${Wx.hm(s.timeline.first.startMin)}';
+      pill = 'UP NEXT';
     } else if (s.dayOver) {
       big = 'Done';
       sub = 'All finished';
+      pill = 'DONE';
     } else if (s.currentIsBreak) {
       big = s.current!.title;
       sub = 'Ends ${Wx.hm(s.current!.endMin)}';
+      pill = 'ON BREAK';
     } else if (s.currentIsClass) {
       big = s.current!.title;
       sub = '${s.completionPercent}% complete';
+      pill = 'IN PROGRESS';
     } else {
       big = 'Free now';
       sub = s.upcomingClasses.isNotEmpty
           ? 'Next ${Wx.hm(s.upcomingClasses.first.startMin)}'
           : 'No more classes';
+      if (s.upcomingClasses.isNotEmpty) pill = 'UP NEXT';
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(weekday.toUpperCase(),
-            style: TextStyle(
-                fontSize: 12, fontWeight: FontWeight.w600, color: Wx.text70)),
+        Text(weekday.toUpperCase(), style: Wx.overline),
         const SizedBox(height: 2),
-        Text(date, style: TextStyle(fontSize: 11, color: Wx.text55)),
+        Text(date, style: Wx.caption.copyWith(color: Wx.text55)),
         const SizedBox(height: 10),
+        if (pill != null) ...[
+          StatusPill(pill),
+          const SizedBox(height: 6),
+        ],
         Text(big,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-                fontSize: 19, fontWeight: FontWeight.w700, height: 1.1)),
+            style: Wx.titleLg.copyWith(fontSize: 19, height: 1.1)),
         const SizedBox(height: 6),
-        Text(sub,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 12, color: Wx.text70)),
+        Text(sub, maxLines: 1, overflow: TextOverflow.ellipsis, style: Wx.caption),
         if (s.currentIsClass) ...[
           const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(3),
-            child: LinearProgressIndicator(
-              value: s.completion,
-              minHeight: 5,
-              backgroundColor: Colors.white.withValues(alpha: 0.25),
-              valueColor: const AlwaysStoppedAnimation(Colors.white),
-            ),
-          ),
+          ProgressBarRx(value: s.completion, height: 6),
         ],
       ],
     );
@@ -157,7 +153,7 @@ class _Row extends StatelessWidget {
           height: 26,
           decoration: BoxDecoration(
               color: Color(entry.color),
-              borderRadius: BorderRadius.circular(2)),
+              borderRadius: BorderRadius.circular(Wx.radiusChip)),
         ),
         const SizedBox(width: 8),
         SizedBox(
@@ -165,11 +161,9 @@ class _Row extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(Wx.hm(entry.startMin),
-                  style: const TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w600)),
+              Text(Wx.hm(entry.startMin), style: Wx.titleMd.copyWith(fontSize: 13)),
               Text(Wx.ampm(entry.startMin),
-                  style: TextStyle(fontSize: 8.5, color: Wx.text55)),
+                  style: Wx.caption.copyWith(fontSize: 8.5, color: Wx.text55)),
             ],
           ),
         ),
@@ -184,26 +178,23 @@ class _Row extends StatelessWidget {
                     child: Text(entry.title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.w600)),
+                        style: Wx.titleMd.copyWith(fontSize: 13)),
                   ),
-                  if (entry.isLab) const _Tag('LAB'),
+                  if (entry.isLab) const LabTag('LAB'),
                 ],
               ),
               if (subtitle.isNotEmpty)
                 Text(subtitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 10.5, color: Wx.text70)),
+                    style: Wx.caption.copyWith(fontSize: 10.5)),
             ],
           ),
         ),
         if (percent != null)
           Padding(
             padding: const EdgeInsets.only(left: 6),
-            child: Text('$percent%',
-                style: const TextStyle(
-                    fontSize: 12.5, fontWeight: FontWeight.w700)),
+            child: PercentPill(percent!),
           ),
       ],
     );
@@ -216,27 +207,11 @@ class _Row extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 2),
       padding: const EdgeInsets.fromLTRB(6, 5, 8, 5),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(10),
+        color: Colors.white.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(Wx.radiusInner),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.10), width: 0.5),
       ),
       child: row,
     );
   }
-}
-
-class _Tag extends StatelessWidget {
-  final String text;
-  const _Tag(this.text);
-  @override
-  Widget build(BuildContext context) => Container(
-        margin: const EdgeInsets.only(left: 5),
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.22),
-          borderRadius: BorderRadius.circular(4),
-        ),
-        child: Text(text,
-            style: const TextStyle(
-                fontSize: 8, fontWeight: FontWeight.w700, letterSpacing: 0.5)),
-      );
 }
