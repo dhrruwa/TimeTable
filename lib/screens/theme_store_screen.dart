@@ -5,6 +5,7 @@ import '../providers/community_providers.dart';
 import '../providers/providers.dart';
 import '../theme/theme_catalog.dart';
 import '../theme/theme_model.dart';
+import '../theme/wallpaper_packs.dart';
 import '../widgets/theme_mock.dart';
 import 'theme_preview_screen.dart';
 
@@ -134,6 +135,7 @@ class _ThemeCardState extends State<_ThemeCard> {
                               width: 160,
                               height: 150,
                               compact: true,
+                              imageAsset: WallpaperPacks.preview(t.assetPack),
                             ),
                           ),
                         ),

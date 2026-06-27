@@ -14,12 +14,17 @@ class ThemeMock extends StatelessWidget {
   /// Hide the upcoming list / extra rows for tiny cards.
   final bool compact;
 
+  /// Optional wallpaper asset — when set the mock shows the real pack artwork
+  /// with the timetable content overlaid (exactly how the widget will look).
+  final String? imageAsset;
+
   const ThemeMock({
     super.key,
     required this.theme,
     required this.width,
     required this.height,
     this.compact = false,
+    this.imageAsset,
   });
 
   /// A representative live-progress color at [t], mirroring the ramp branches in
@@ -61,18 +66,7 @@ class ThemeMock extends StatelessWidget {
           height: 1.1,
         );
 
-    return Container(
-      width: width,
-      height: height,
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        gradient: theme.background.linearGradient,
-        borderRadius: BorderRadius.circular(theme.borderRadius),
-        border: Border.all(color: theme.glass.hairline, width: 0.5),
-        boxShadow: theme.glass.shadow,
-      ),
-      padding: EdgeInsets.all(14 * scale),
-      child: Column(
+    final content = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('MON', style: t(11, FontWeight.w700, c: onBg.withValues(alpha: 0.7), ls: 1.2)),
@@ -121,6 +115,44 @@ class ThemeMock extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: t(12, FontWeight.w500, c: onBg.withValues(alpha: 0.72))),
           ],
+        ],
+      );
+
+    return Container(
+      width: width,
+      height: height,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        gradient: imageAsset == null ? theme.background.linearGradient : null,
+        color: imageAsset == null ? null : Colors.black,
+        borderRadius: BorderRadius.circular(theme.borderRadius),
+        border: Border.all(color: theme.glass.hairline, width: 0.5),
+        boxShadow: theme.glass.shadow,
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          if (imageAsset != null) ...[
+            Image.asset(imageAsset!, fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => DecoratedBox(
+                    decoration:
+                        BoxDecoration(gradient: theme.background.linearGradient))),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: theme.overlayStrength * 0.35),
+                    Colors.black.withValues(alpha: theme.overlayStrength * 0.55),
+                    Colors.black.withValues(alpha: theme.overlayStrength),
+                  ],
+                  stops: const [0.0, 0.5, 1.0],
+                ),
+              ),
+            ),
+          ],
+          Padding(padding: EdgeInsets.all(14 * scale), child: content),
         ],
       ),
     );

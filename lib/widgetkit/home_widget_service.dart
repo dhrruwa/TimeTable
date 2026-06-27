@@ -75,6 +75,13 @@ class HomeWidgetService {
     final weekdayFull = _full[(weekday - 1) % 7];
     final date = '${at.day} ${_months[at.month - 1]}';
 
+    // Resolve this pack's wallpaper per size (null → gradient fallback). The
+    // background image *is* the theme when present.
+    final pack = tm.assetPack;
+    final wpSmall = WallpaperPacks.asset(pack, 'small', at);
+    final wpMedium = WallpaperPacks.asset(pack, 'medium', at);
+    final wpLarge = WallpaperPacks.asset(pack, 'large', at);
+
     // Structured data for the NATIVE self-updating Android widget: every day's
     // precomputed timeline. The native widget computes the *current* period from
     // this + the system clock, so it stays live in the background without the
@@ -121,6 +128,11 @@ class HomeWidgetService {
     await HomeWidget.saveWidgetData<String>(
         'theme_radius', tm.borderRadius.toStringAsFixed(0));
     await HomeWidget.saveWidgetData<String>('theme_progress_ramp', tm.progressRamp.name);
+    // Native Android wallpaper selection: folder + count (Kotlin picks the same
+    // rotating index and loads the bundled asset PNG behind the widget).
+    await HomeWidget.saveWidgetData<String>('theme_asset_pack', tm.assetPack);
+    await HomeWidget.saveWidgetData<String>(
+        'theme_pack_count', WallpaperPacks.count(tm.assetPack).toString());
     await HomeWidget.saveWidgetData<String>(
         'theme_label_current', tm.labels.currentClass);
     await HomeWidget.saveWidgetData<String>('theme_label_upnext', tm.labels.upNext);
@@ -134,6 +146,7 @@ class HomeWidgetService {
           date: date,
           size: 170,
           elevated: false,
+          backgroundImage: wpSmall,
         )),
         key: _smallKey,
         logicalSize: const Size(170, 170),
@@ -146,6 +159,7 @@ class HomeWidgetService {
           width: 360,
           height: 170,
           elevated: false,
+          backgroundImage: wpMedium,
         )),
         key: _mediumKey,
         logicalSize: const Size(360, 170),
@@ -159,6 +173,7 @@ class HomeWidgetService {
           height: 376,
           elevated: false,
           dense: true,
+          backgroundImage: wpLarge,
         )),
         key: _largeKey,
         logicalSize: const Size(360, 376),

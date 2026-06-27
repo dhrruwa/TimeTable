@@ -10,8 +10,14 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.LinearGradient
+import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.RectF
+import android.graphics.Shader
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.view.View
@@ -94,6 +100,8 @@ private data class WTheme(
     val labelCurrent: String,
     val labelUpnext: String,
     val labelBreak: String,
+    val assetPack: String,
+    val packCount: Int,
 )
 
 private object WidgetTheme {
@@ -115,6 +123,8 @@ private object WidgetTheme {
             labelCurrent = p.getString("theme_label_current", null) ?: "IN PROGRESS",
             labelUpnext = p.getString("theme_label_upnext", null) ?: "UP NEXT",
             labelBreak = p.getString("theme_label_break", null) ?: "ON BREAK",
+            assetPack = p.getString("theme_asset_pack", null) ?: "",
+            packCount = p.getString("theme_pack_count", null)?.toIntOrNull() ?: 0,
         )
     }
 }
@@ -133,7 +143,7 @@ object WidgetRenderer {
         setClick(context, v)
 
         val theme = WidgetTheme.load(context)
-        applyTheme(context, mgr, id, v, theme)
+        applyTheme(context, mgr, id, v, theme, variant)
 
         val cal = Calendar.getInstance()
         val weekday = isoWeekday(cal)
@@ -197,31 +207,41 @@ object WidgetRenderer {
         mgr.updateAppWidget(id, v)
     }
 
-    /** Paints the themed background bitmap and recolors all text views. */
+    /** Paints the themed background (wallpaper if available, else gradient) and
+     *  recolors all text views. */
     private fun applyTheme(
         context: Context,
         mgr: AppWidgetManager,
         id: Int,
         v: RemoteViews,
         theme: WTheme,
+        variant: Variant,
     ) {
-        // Background: a rounded GradientDrawable rasterized to the widget's px
-        // size, set on the w_bg ImageView (keeps rounded corners + gradient).
         val dm = context.resources.displayMetrics
-        val opts = mgr.getAppWidgetOptions(id)
-        val minWdp = opts?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0) ?: 0
-        val minHdp = opts?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0) ?: 0
-        val wPx = (((if (minWdp > 0) minWdp else 160)) * dm.density).toInt().coerceIn(1, 1400)
-        val hPx = (((if (minHdp > 0) minHdp else 160)) * dm.density).toInt().coerceIn(1, 1600)
-        val gd = GradientDrawable(
-            GradientDrawable.Orientation.TOP_BOTTOM,
-            intArrayOf(theme.bgTop, theme.bgBottom),
-        )
-        gd.cornerRadius = theme.radiusDp * dm.density
-        gd.setBounds(0, 0, wPx, hPx)
-        val bmp = Bitmap.createBitmap(wPx, hPx, Bitmap.Config.ARGB_8888)
-        gd.draw(Canvas(bmp))
-        v.setImageViewBitmap(R.id.w_bg, bmp)
+        val radiusPx = theme.radiusDp * dm.density
+
+        // Background: a theme-pack wallpaper (the image *is* the theme) when the
+        // pack has generated art, else a themed rounded gradient. Both keep
+        // rounded corners and get a readability scrim baked in for the wallpaper.
+        val wallpaper = loadWallpaper(context, theme, variant, radiusPx)
+        if (wallpaper != null) {
+            v.setImageViewBitmap(R.id.w_bg, wallpaper)
+        } else {
+            val opts = mgr.getAppWidgetOptions(id)
+            val minWdp = opts?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0) ?: 0
+            val minHdp = opts?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0) ?: 0
+            val wPx = (((if (minWdp > 0) minWdp else 160)) * dm.density).toInt().coerceIn(1, 1400)
+            val hPx = (((if (minHdp > 0) minHdp else 160)) * dm.density).toInt().coerceIn(1, 1600)
+            val gd = GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                intArrayOf(theme.bgTop, theme.bgBottom),
+            )
+            gd.cornerRadius = radiusPx
+            gd.setBounds(0, 0, wPx, hPx)
+            val bmp = Bitmap.createBitmap(wPx, hPx, Bitmap.Config.ARGB_8888)
+            gd.draw(Canvas(bmp))
+            v.setImageViewBitmap(R.id.w_bg, bmp)
+        }
 
         // Text colors.
         v.setTextColor(R.id.w_day, theme.textPrimary)
@@ -229,6 +249,59 @@ object WidgetRenderer {
         v.setTextColor(R.id.w_status, theme.textPrimary)
         v.setTextColor(R.id.w_title, theme.textPrimary)
         v.setTextColor(R.id.w_subtitle, theme.textSecondary)
+    }
+
+    /** Loads the rotating wallpaper PNG bundled in flutter_assets for [variant],
+     *  rounds its corners and bakes a bottom-weighted dark scrim for legibility.
+     *  Returns null when the pack has no art (→ gradient fallback). The index
+     *  matches the Dart `WallpaperPacks.indexFor` so both platforms agree. */
+    private fun loadWallpaper(
+        context: Context,
+        theme: WTheme,
+        variant: Variant,
+        radiusPx: Float,
+    ): Bitmap? {
+        if (theme.packCount <= 0 || theme.assetPack.isEmpty()) return null
+        val cal = Calendar.getInstance()
+        val bucket = cal.get(Calendar.DAY_OF_MONTH) * 24 + cal.get(Calendar.HOUR_OF_DAY)
+        val idx = (bucket % theme.packCount) + 1
+        val sizeName = when (variant) {
+            Variant.SMALL -> "small"
+            Variant.MEDIUM -> "medium"
+            Variant.LARGE -> "large"
+        }
+        val path = "flutter_assets/assets/theme_packs/${theme.assetPack}/${idx}_$sizeName.png"
+        val src = try {
+            context.assets.open(path).use { BitmapFactory.decodeStream(it) }
+        } catch (e: Exception) {
+            null
+        } ?: return null
+
+        val w = src.width
+        val h = src.height
+        val out = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        val c = Canvas(out)
+        val path2 = Path().apply {
+            addRoundRect(RectF(0f, 0f, w.toFloat(), h.toFloat()), radiusPx, radiusPx, Path.Direction.CW)
+        }
+        c.clipPath(path2)
+        c.drawBitmap(src, 0f, 0f, null)
+        // Bottom-weighted dark scrim (strength 0.55, matching the Flutter side).
+        val s = 0.55f
+        val scrim = Paint().apply {
+            shader = LinearGradient(
+                0f, 0f, 0f, h.toFloat(),
+                intArrayOf(
+                    Color.argb((0.35f * 255 * s).toInt(), 0, 0, 0),
+                    Color.argb((0.55f * 255 * s).toInt(), 0, 0, 0),
+                    Color.argb((255 * s).toInt(), 0, 0, 0),
+                ),
+                floatArrayOf(0f, 0.5f, 1f),
+                Shader.TileMode.CLAMP,
+            )
+        }
+        c.drawRect(0f, 0f, w.toFloat(), h.toFloat(), scrim)
+        return out
     }
 
     /** Live % complete (tinted on the active theme's ramp) + the next two classes. */

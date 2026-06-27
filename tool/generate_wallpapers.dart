@@ -18,9 +18,15 @@
 //   GEMINI_API_KEY=xxxx dart run tool/generate_wallpapers.dart
 //   GEMINI_API_KEY=xxxx dart run tool/generate_wallpapers.dart --packs=anime,space --count=4 --force
 //
+// Providers (set IMAGE_MODEL):
+//   imagen-4.0-generate-001 (default) — Google Imagen, best quality, needs a
+//                                       GEMINI_API_KEY on a *billed* project.
+//   gemini-2.5-flash-image            — Google Gemini image, also needs billing.
+//   pollinations                      — free, keyless (Flux). No billing, no key.
+//
 // Env:
-//   GEMINI_API_KEY (or GOOGLE_API_KEY)  — required
-//   IMAGE_MODEL                          — optional, default imagen-3.0-generate-002
+//   IMAGE_MODEL                          — provider/model (see above)
+//   GEMINI_API_KEY (or GOOGLE_API_KEY)   — required for the Google providers only
 //
 // Notes:
 //   * Imagen is a paid API — `--count` controls images per pack (cost = packs ×
@@ -178,22 +184,25 @@ final _packs = <String, _Pack>{
 
 Future<int> main(List<String> argv) async {
   final args = _Args(argv);
+  final model = Platform.environment['IMAGE_MODEL'] ?? 'imagen-4.0-generate-001';
+  final usePollinations = model == 'pollinations';
   final key = Platform.environment['GEMINI_API_KEY'] ??
       Platform.environment['GOOGLE_API_KEY'] ??
       '';
-  if (key.isEmpty) {
+  if (!usePollinations && key.isEmpty) {
     stderr.writeln(
-        'ERROR: set GEMINI_API_KEY (or GOOGLE_API_KEY) in the environment.');
+        'ERROR: set GEMINI_API_KEY (or GOOGLE_API_KEY), or use IMAGE_MODEL=pollinations.');
     return 2;
   }
-  final model = Platform.environment['IMAGE_MODEL'] ?? 'imagen-3.0-generate-002';
   final count = args.intOption('count', 3);
   final force = args.flag('force');
   final only = args.listOption('packs');
 
   final outRoot = Directory('assets/theme_packs');
   outRoot.createSync(recursive: true);
-  final client = HttpClient();
+  final client = HttpClient()
+    ..idleTimeout = const Duration(seconds: 120)
+    ..connectionTimeout = const Duration(seconds: 60);
   final manifest = <String, int>{};
   var generated = 0, skipped = 0, failed = 0;
 
@@ -217,7 +226,13 @@ Future<int> main(List<String> argv) async {
       }
       final prompt = '${p.scenes[(i - 1) % p.scenes.length]}, ${p.style}, $_styleSuffix';
       stdout.writeln('  [$i] generating…');
-      final bytes = await _imagen(client, model, key, prompt);
+      // Route to the selected provider. Imagen → :predict, Gemini image →
+      // :generateContent, Pollinations → keyless GET.
+      final bytes = usePollinations
+          ? await _pollinations(client, prompt, i * 100003 + pack.hashCode)
+          : model.startsWith('imagen')
+              ? await _imagen(client, model, key, prompt)
+              : await _geminiImage(client, model, key, prompt);
       if (bytes == null) {
         stderr.writeln('  [$i] FAILED (see error above)');
         failed++;
@@ -289,6 +304,89 @@ Future<Uint8List?> _imagen(
       return null;
     }
     return base64Decode(b64);
+  } catch (e) {
+    stderr.writeln('    request error: $e');
+    return null;
+  }
+}
+
+/// Calls a Gemini image model (`:generateContent`) and returns image bytes, or
+/// null on failure. Works on the free tier (unlike Imagen). The model returns a
+/// roughly square image; the variant cropper derives every widget size from it.
+Future<Uint8List?> _geminiImage(
+    HttpClient client, String model, String key, String prompt) async {
+  final uri = Uri.parse('$_endpointBase/$model:generateContent?key=$key');
+  final body = jsonEncode({
+    'contents': [
+      {
+        'parts': [
+          {'text': '$prompt. Output a single tall vertical 9:16 wallpaper image.'}
+        ]
+      }
+    ],
+    'generationConfig': {
+      'responseModalities': ['IMAGE'],
+    },
+  });
+  try {
+    final req = await client.postUrl(uri);
+    req.headers.contentType = ContentType.json;
+    req.write(body);
+    final res = await req.close();
+    final text = await res.transform(utf8.decoder).join();
+    if (res.statusCode != 200) {
+      stderr.writeln('    HTTP ${res.statusCode}: ${_trim(text)}');
+      return null;
+    }
+    final json = jsonDecode(text) as Map<String, dynamic>;
+    final cands = json['candidates'] as List?;
+    if (cands == null || cands.isEmpty) {
+      stderr.writeln('    no candidates: ${_trim(text)}');
+      return null;
+    }
+    final content = (cands.first as Map)['content'] as Map?;
+    final parts = content?['parts'] as List?;
+    if (parts != null) {
+      for (final p in parts) {
+        final inline = (p as Map)['inlineData'] ?? p['inline_data'];
+        if (inline is Map && inline['data'] is String) {
+          return base64Decode(inline['data'] as String);
+        }
+      }
+    }
+    stderr.writeln('    no inline image in response: ${_trim(text)}');
+    return null;
+  } catch (e) {
+    stderr.writeln('    request error: $e');
+    return null;
+  }
+}
+
+/// Free, keyless image generation via Pollinations.ai (Flux). Requests a tall
+/// master directly; the variant cropper derives every widget size from it.
+Future<Uint8List?> _pollinations(
+    HttpClient client, String prompt, int seed) async {
+  final enc = Uri.encodeComponent(prompt);
+  final uri = Uri.parse('https://image.pollinations.ai/prompt/$enc'
+      '?width=768&height=1365&nologo=true&model=flux&seed=${seed & 0x7fffffff}');
+  try {
+    final req = await client.getUrl(uri);
+    req.headers.set(HttpHeaders.userAgentHeader, 'timetable-wallpaper-gen');
+    final res = await req.close();
+    if (res.statusCode != 200) {
+      final text = await res.transform(utf8.decoder).join();
+      stderr.writeln('    HTTP ${res.statusCode}: ${_trim(text)}');
+      return null;
+    }
+    final bytes = <int>[];
+    await for (final chunk in res) {
+      bytes.addAll(chunk);
+    }
+    if (bytes.isEmpty) {
+      stderr.writeln('    empty image response');
+      return null;
+    }
+    return Uint8List.fromList(bytes);
   } catch (e) {
     stderr.writeln('    request error: $e');
     return null;
