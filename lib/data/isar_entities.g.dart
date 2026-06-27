@@ -2689,6 +2689,11 @@ const AppPrefsEntitySchema = CollectionSchema(
       id: 1,
       name: r'onboarded',
       type: IsarType.bool,
+    ),
+    r'themeId': PropertySchema(
+      id: 2,
+      name: r'themeId',
+      type: IsarType.string,
     )
   },
   estimateSize: _appPrefsEntityEstimateSize,
@@ -2712,6 +2717,7 @@ int _appPrefsEntityEstimateSize(
 ) {
   var bytesCount = offsets.last;
   bytesCount += 3 + object.deviceId.length * 3;
+  bytesCount += 3 + object.themeId.length * 3;
   return bytesCount;
 }
 
@@ -2723,6 +2729,7 @@ void _appPrefsEntitySerialize(
 ) {
   writer.writeString(offsets[0], object.deviceId);
   writer.writeBool(offsets[1], object.onboarded);
+  writer.writeString(offsets[2], object.themeId);
 }
 
 AppPrefsEntity _appPrefsEntityDeserialize(
@@ -2735,6 +2742,7 @@ AppPrefsEntity _appPrefsEntityDeserialize(
   object.deviceId = reader.readString(offsets[0]);
   object.id = id;
   object.onboarded = reader.readBool(offsets[1]);
+  object.themeId = reader.readString(offsets[2]);
   return object;
 }
 
@@ -2749,6 +2757,8 @@ P _appPrefsEntityDeserializeProp<P>(
       return (reader.readString(offset)) as P;
     case 1:
       return (reader.readBool(offset)) as P;
+    case 2:
+      return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -3050,6 +3060,142 @@ extension AppPrefsEntityQueryFilter
       ));
     });
   }
+
+  QueryBuilder<AppPrefsEntity, AppPrefsEntity, QAfterFilterCondition>
+      themeIdEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'themeId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppPrefsEntity, AppPrefsEntity, QAfterFilterCondition>
+      themeIdGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'themeId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppPrefsEntity, AppPrefsEntity, QAfterFilterCondition>
+      themeIdLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'themeId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppPrefsEntity, AppPrefsEntity, QAfterFilterCondition>
+      themeIdBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'themeId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppPrefsEntity, AppPrefsEntity, QAfterFilterCondition>
+      themeIdStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'themeId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppPrefsEntity, AppPrefsEntity, QAfterFilterCondition>
+      themeIdEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'themeId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppPrefsEntity, AppPrefsEntity, QAfterFilterCondition>
+      themeIdContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'themeId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppPrefsEntity, AppPrefsEntity, QAfterFilterCondition>
+      themeIdMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'themeId',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppPrefsEntity, AppPrefsEntity, QAfterFilterCondition>
+      themeIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'themeId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AppPrefsEntity, AppPrefsEntity, QAfterFilterCondition>
+      themeIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'themeId',
+        value: '',
+      ));
+    });
+  }
 }
 
 extension AppPrefsEntityQueryObject
@@ -3083,6 +3229,19 @@ extension AppPrefsEntityQuerySortBy
       sortByOnboardedDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'onboarded', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppPrefsEntity, AppPrefsEntity, QAfterSortBy> sortByThemeId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'themeId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppPrefsEntity, AppPrefsEntity, QAfterSortBy>
+      sortByThemeIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'themeId', Sort.desc);
     });
   }
 }
@@ -3126,6 +3285,19 @@ extension AppPrefsEntityQuerySortThenBy
       return query.addSortBy(r'onboarded', Sort.desc);
     });
   }
+
+  QueryBuilder<AppPrefsEntity, AppPrefsEntity, QAfterSortBy> thenByThemeId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'themeId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppPrefsEntity, AppPrefsEntity, QAfterSortBy>
+      thenByThemeIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'themeId', Sort.desc);
+    });
+  }
 }
 
 extension AppPrefsEntityQueryWhereDistinct
@@ -3141,6 +3313,13 @@ extension AppPrefsEntityQueryWhereDistinct
       distinctByOnboarded() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'onboarded');
+    });
+  }
+
+  QueryBuilder<AppPrefsEntity, AppPrefsEntity, QDistinct> distinctByThemeId(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'themeId', caseSensitive: caseSensitive);
     });
   }
 }
@@ -3162,6 +3341,12 @@ extension AppPrefsEntityQueryProperty
   QueryBuilder<AppPrefsEntity, bool, QQueryOperations> onboardedProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'onboarded');
+    });
+  }
+
+  QueryBuilder<AppPrefsEntity, String, QQueryOperations> themeIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'themeId');
     });
   }
 }

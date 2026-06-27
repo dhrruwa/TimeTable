@@ -37,17 +37,23 @@ class _HomeWidgetUpdaterState extends ConsumerState<HomeWidgetUpdater>
   }
 
   void _push({DateTime? now}) {
-    HomeWidgetService.refresh(ref.read(timetableProvider), now: now);
+    HomeWidgetService.refresh(
+      ref.read(timetableProvider),
+      now: now,
+      theme: ref.read(activeThemeProvider),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // Re-render when the minute ticks or the timetable is edited.
+    // Re-render when the minute ticks, the timetable is edited, or the theme
+    // pack changes (so applying a theme instantly re-skins the widgets).
     ref.listen(clockProvider, (_, next) {
       final now = next.value;
       if (now != null) _push(now: now);
     });
     ref.listen(timetableProvider, (_, __) => _push());
+    ref.listen(activeThemeProvider, (_, __) => _push());
     return widget.child;
   }
 }

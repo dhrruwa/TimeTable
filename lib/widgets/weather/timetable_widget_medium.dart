@@ -13,6 +13,7 @@ class TimetableWidgetMedium extends StatelessWidget {
   final double width;
   final double height;
   final bool elevated;
+  final String? backgroundImage;
 
   const TimetableWidgetMedium({
     super.key,
@@ -22,6 +23,7 @@ class TimetableWidgetMedium extends StatelessWidget {
     this.width = 360,
     this.height = 170,
     this.elevated = true,
+    this.backgroundImage,
   });
 
   @override
@@ -33,6 +35,8 @@ class TimetableWidgetMedium extends StatelessWidget {
       width: width,
       height: height,
       elevated: elevated,
+      imageAsset: backgroundImage,
+      overlayStrength: Wx.active.overlayStrength,
       // In-progress class → live red→yellow→green sweep; otherwise neutral.
       gradient: current != null
           ? Wx.progressGradient(status.completion)
@@ -86,7 +90,7 @@ class TimetableWidgetMedium extends StatelessWidget {
     } else if (s.beforeDay) {
       big = 'Day ahead';
       sub = 'Starts ${Wx.hm(s.timeline.first.startMin)}';
-      pill = 'UP NEXT';
+      pill = Wx.active.labels.upNext;
     } else if (s.dayOver) {
       big = 'Done';
       sub = 'All finished';
@@ -94,17 +98,17 @@ class TimetableWidgetMedium extends StatelessWidget {
     } else if (s.currentIsBreak) {
       big = s.current!.title;
       sub = 'Ends ${Wx.hm(s.current!.endMin)}';
-      pill = 'ON BREAK';
+      pill = Wx.active.labels.onBreak;
     } else if (s.currentIsClass) {
       big = s.current!.title;
       sub = '${s.completionPercent}% complete';
-      pill = 'IN PROGRESS';
+      pill = Wx.active.labels.currentClass;
     } else {
       big = 'Free now';
       sub = s.upcomingClasses.isNotEmpty
           ? 'Next ${Wx.hm(s.upcomingClasses.first.startMin)}'
           : 'No more classes';
-      if (s.upcomingClasses.isNotEmpty) pill = 'UP NEXT';
+      if (s.upcomingClasses.isNotEmpty) pill = Wx.active.labels.upNext;
     }
 
     return Column(

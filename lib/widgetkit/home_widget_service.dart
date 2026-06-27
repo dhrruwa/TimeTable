@@ -8,9 +8,13 @@ import '../logic/notes_engine.dart';
 import '../logic/timetable_builder.dart';
 import '../logic/today_engine.dart';
 import '../models/period_models.dart';
+import '../theme/theme_catalog.dart';
+import '../theme/theme_model.dart';
+import '../theme/wallpaper_packs.dart';
 import '../widgets/weather/timetable_widget_large.dart';
 import '../widgets/weather/timetable_widget_medium.dart';
 import '../widgets/weather/timetable_widget_small.dart';
+import '../widgets/weather/weather_style.dart';
 
 /// Bridges the Flutter widget designs onto the real OS home-screen widgets by
 /// rendering them to PNGs with `home_widget`'s `renderFlutterWidget`.
@@ -45,9 +49,19 @@ class HomeWidgetService {
     }
   }
 
+  /// `#AARRGGBB` for native (`Color.parseColor`) consumption.
+  static String _hex(Color c) =>
+      '#${c.toARGB32().toRadixString(16).padLeft(8, '0').toUpperCase()}';
+
   /// Renders all three sizes for [timetable] at the current moment and refreshes
-  /// the home-screen widgets.
-  static Future<void> refresh(Timetable timetable, {DateTime? now}) async {
+  /// the home-screen widgets. [theme] re-skins both the Flutter-rendered PNGs
+  /// (iOS + initial Android) and the native Android widget (via theme_* tokens).
+  static Future<void> refresh(Timetable timetable,
+      {DateTime? now, ThemeModel? theme}) async {
+    final tm = theme ?? themeById(kDefaultThemeId);
+    // The widget trees rasterize off-screen reading Wx.active — set it first so
+    // the PNGs bake in the active pack's colors/fonts/labels.
+    Wx.active = tm;
     final at = now ?? DateTime.now();
     final weekday = at.weekday;
     final timeline = TimetableBuilder.buildDay(
@@ -87,6 +101,30 @@ class HomeWidgetService {
     }
     await HomeWidget.saveWidgetData<String>(
         'tt_timelines', jsonEncode(timelines));
+
+    // Theme tokens for the NATIVE Android widget. It applies these at runtime on
+    // its 60s self-update tick, so the recolor survives with the app closed. The
+    // ramp name must match a branch in both Wx.progressColor (Dart) and
+    // WidgetRenderer.progressColor (Kotlin).
+    await HomeWidget.saveWidgetData<String>('theme_bg_top', _hex(tm.background.top));
+    await HomeWidget.saveWidgetData<String>(
+        'theme_bg_bottom', _hex(tm.background.bottom));
+    await HomeWidget.saveWidgetData<String>(
+        'theme_bg_angle', tm.background.gradientAngle.toInt().toString());
+    await HomeWidget.saveWidgetData<String>('theme_text_primary', _hex(tm.onBg));
+    await HomeWidget.saveWidgetData<String>(
+        'theme_text_secondary', _hex(tm.onBg.withValues(alpha: 0.72)));
+    await HomeWidget.saveWidgetData<String>('theme_accent', _hex(tm.accent));
+    await HomeWidget.saveWidgetData<String>('theme_primary', _hex(tm.primary));
+    await HomeWidget.saveWidgetData<String>('theme_secondary', _hex(tm.secondary));
+    await HomeWidget.saveWidgetData<String>('theme_hairline', _hex(tm.glass.hairline));
+    await HomeWidget.saveWidgetData<String>(
+        'theme_radius', tm.borderRadius.toStringAsFixed(0));
+    await HomeWidget.saveWidgetData<String>('theme_progress_ramp', tm.progressRamp.name);
+    await HomeWidget.saveWidgetData<String>(
+        'theme_label_current', tm.labels.currentClass);
+    await HomeWidget.saveWidgetData<String>('theme_label_upnext', tm.labels.upNext);
+    await HomeWidget.saveWidgetData<String>('theme_label_break', tm.labels.onBreak);
 
     try {
       await HomeWidget.renderFlutterWidget(

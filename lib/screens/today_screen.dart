@@ -7,6 +7,7 @@ import '../logic/today_engine.dart';
 import '../models/period_models.dart';
 import '../providers/providers.dart';
 import '../providers/widget_providers.dart';
+import '../theme/theme_model.dart';
 import '../widgets/dhrruwa_footer.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/note_card.dart';
@@ -70,7 +71,10 @@ class TodayScreen extends ConsumerWidget {
           : ListView(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
               children: [
-                _Hero(status: status, context: context),
+                _Hero(
+                    status: status,
+                    context: context,
+                    labels: ref.watch(activeThemeProvider).labels),
                 const SizedBox(height: 14),
                 NoteCard(note: note),
                 const SizedBox(height: 24),
@@ -202,7 +206,9 @@ class _NextDayView extends StatelessWidget {
 class _Hero extends StatelessWidget {
   final TodayStatus status;
   final BuildContext context;
-  const _Hero({required this.status, required this.context});
+  final ThemeLabels labels;
+  const _Hero(
+      {required this.status, required this.context, required this.labels});
 
   @override
   Widget build(BuildContext _) {
@@ -258,7 +264,7 @@ class _Hero extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(isBreak ? 'ON BREAK' : 'IN PROGRESS',
+                Text(isBreak ? labels.onBreak : labels.currentClass,
                     style: TextStyle(
                         color: fg.withValues(alpha: 0.85),
                         fontSize: 11,

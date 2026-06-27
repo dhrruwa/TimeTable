@@ -1,21 +1,28 @@
 import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 
-/// Soft, rounded Material 3 theme — calm solid colors (no neon), generous
-/// curves, airy surfaces, and pill-shaped buttons. Per-subject color is applied
+import 'theme/theme_catalog.dart';
+import 'theme/theme_model.dart';
+
+/// Soft, rounded Material 3 theme — generous curves, airy surfaces, and
+/// pill-shaped buttons. Colors, fonts, and surface treatment come from the
+/// active [ThemeModel] (see `lib/theme/theme_catalog.dart`); the default pack
+/// reproduces the original calm indigo look. Per-subject color is still applied
 /// at the widget level from each subject.
 class AppTheme {
-  // A calm, slightly muted indigo — solid, not neon.
-  static const _seed = Color(0xFF5965C8);
+  static final ThemeModel _default = themeById(kDefaultThemeId);
 
-  static ThemeData light() => _build(Brightness.light);
-  static ThemeData dark() => _build(Brightness.dark);
+  static ThemeData light([ThemeModel? model]) =>
+      _build(Brightness.light, model ?? _default);
+  static ThemeData dark([ThemeModel? model]) =>
+      _build(Brightness.dark, model ?? _default);
 
-  static ThemeData _build(Brightness brightness) {
+  static ThemeData _build(Brightness brightness, ThemeModel model) {
     final scheme = ColorScheme.fromSeed(
-      seedColor: _seed,
+      seedColor: model.primary,
       brightness: brightness,
     );
+    final fontFamily = model.typography.fontFamily;
 
     final pill = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(26),
@@ -34,7 +41,12 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
-      scaffoldBackgroundColor: scheme.surface,
+      fontFamily: fontFamily,
+      // Dark packs paint over their themed background; the light variant keeps
+      // the Material surface so light mode stays clean.
+      scaffoldBackgroundColor: brightness == Brightness.dark
+          ? model.background.bottom
+          : scheme.surface,
       // Smooth, premium navigation transitions on both platforms.
       pageTransitionsTheme: const PageTransitionsTheme(builders: {
         TargetPlatform.android: CupertinoPageTransitionsBuilder(),

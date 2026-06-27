@@ -51,6 +51,7 @@ class AppPrefsEntity {
   Id id = 0;
   late String deviceId;
   bool onboarded = false;
+  String themeId = 'liquid_glass';
 
   AppPrefsEntity();
 }

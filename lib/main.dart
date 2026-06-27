@@ -14,6 +14,9 @@ import 'providers/widget_providers.dart';
 import 'screens/home_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'theme.dart';
+import 'theme/theme_catalog.dart';
+import 'theme/wallpaper_packs.dart';
+import 'widgets/weather/weather_style.dart';
 import 'widgetkit/deep_link_handler.dart';
 import 'widgetkit/home_widget_service.dart';
 import 'widgetkit/home_widget_updater.dart';
@@ -23,6 +26,9 @@ Future<void> main() async {
 
   // Home-screen widget bridge (App Group on iOS, etc.).
   await HomeWidgetService.init();
+
+  // Load the wallpaper manifest (theme-pack background images, if generated).
+  await WallpaperPacks.load();
 
   // Open Isar (timetable + community + prefs collections).
   final dir = await getApplicationDocumentsDirectory();
@@ -68,19 +74,81 @@ class TimetableApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
+    final theme = ref.watch(activeThemeProvider);
     final onboarded = ref.watch(appPrefsProvider).onboarded;
+
+    // Keep the home-screen-widget style hub in sync so any in-app widget
+    // previews render with the active pack immediately.
+    Wx.active = theme;
+
+    // The default pack still honors the user's light/dark/system choice; the
+    // vivid packs are designed dark-only, so pin them to dark.
+    final effectiveMode =
+        theme.id == kDefaultThemeId ? themeMode : ThemeMode.dark;
+
     return MaterialApp(
       title: 'Timetable',
       debugShowCheckedModeBanner: false,
       navigatorKey: DeepLinkHandler.navigatorKey,
-      theme: AppTheme.light(),
-      darkTheme: AppTheme.dark(),
-      themeMode: themeMode,
+      theme: AppTheme.light(theme),
+      darkTheme: AppTheme.dark(theme),
+      themeMode: effectiveMode,
       home: DeepLinkHandler(
-        child: onboarded
-            ? const HomeWidgetUpdater(child: HomeScreen())
-            : const OnboardingScreen(),
+        child: _ThemeMorph(
+          themeId: theme.id,
+          child: onboarded
+              ? const HomeWidgetUpdater(child: HomeScreen())
+              : const OnboardingScreen(),
+        ),
       ),
+    );
+  }
+}
+
+/// Plays a brief fade + scale "morph" whenever the active theme id changes,
+/// without rebuilding [child] (so navigation / tab state is preserved).
+class _ThemeMorph extends StatefulWidget {
+  final String themeId;
+  final Widget child;
+  const _ThemeMorph({required this.themeId, required this.child});
+
+  @override
+  State<_ThemeMorph> createState() => _ThemeMorphState();
+}
+
+class _ThemeMorphState extends State<_ThemeMorph>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 300),
+    value: 1,
+  );
+
+  @override
+  void didUpdateWidget(_ThemeMorph old) {
+    super.didUpdateWidget(old);
+    if (old.themeId != widget.themeId) _c.forward(from: 0);
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final curve = CurvedAnimation(parent: _c, curve: Curves.easeOutCubic);
+    return AnimatedBuilder(
+      animation: curve,
+      child: widget.child,
+      builder: (_, child) {
+        final t = curve.value; // 0 -> 1
+        return Opacity(
+          opacity: 0.3 + 0.7 * t,
+          child: Transform.scale(scale: 0.98 + 0.02 * t, child: child),
+        );
+      },
     );
   }
 }

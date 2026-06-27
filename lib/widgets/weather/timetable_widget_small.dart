@@ -12,6 +12,7 @@ class TimetableWidgetSmall extends StatelessWidget {
   final String date;
   final double size;
   final bool elevated;
+  final String? backgroundImage;
 
   const TimetableWidgetSmall({
     super.key,
@@ -20,6 +21,7 @@ class TimetableWidgetSmall extends StatelessWidget {
     required this.date,
     this.size = 170,
     this.elevated = true,
+    this.backgroundImage,
   });
 
   @override
@@ -31,6 +33,8 @@ class TimetableWidgetSmall extends StatelessWidget {
       width: size,
       height: size,
       elevated: elevated,
+      imageAsset: backgroundImage,
+      overlayStrength: Wx.active.overlayStrength,
       gradient: h.liveProgress != null
           ? Wx.progressGradient(h.liveProgress!)
           : (h.accentColor != null

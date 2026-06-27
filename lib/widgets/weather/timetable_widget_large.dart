@@ -15,6 +15,7 @@ class TimetableWidgetLarge extends StatelessWidget {
   final double? height;
   final bool elevated;
   final bool dense;
+  final String? backgroundImage;
 
   const TimetableWidgetLarge({
     super.key,
@@ -25,6 +26,7 @@ class TimetableWidgetLarge extends StatelessWidget {
     this.height,
     this.elevated = true,
     this.dense = false,
+    this.backgroundImage,
   });
 
   @override
@@ -36,6 +38,8 @@ class TimetableWidgetLarge extends StatelessWidget {
       width: width,
       height: height,
       elevated: elevated,
+      imageAsset: backgroundImage,
+      overlayStrength: Wx.active.overlayStrength,
       gradient: Wx.neutralGradient,
       padding: EdgeInsets.fromLTRB(18, dense ? 12 : 16, 18, dense ? 10 : 14),
       child: Column(

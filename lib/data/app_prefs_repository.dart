@@ -7,11 +7,21 @@ import 'isar_entities.dart';
 class AppPrefs {
   final String deviceId;
   final bool onboarded;
-  const AppPrefs({required this.deviceId, this.onboarded = false});
 
-  AppPrefs copyWith({String? deviceId, bool? onboarded}) => AppPrefs(
+  /// Id of the selected theme pack (see `lib/theme/theme_catalog.dart`).
+  final String themeId;
+
+  const AppPrefs({
+    required this.deviceId,
+    this.onboarded = false,
+    this.themeId = 'liquid_glass',
+  });
+
+  AppPrefs copyWith({String? deviceId, bool? onboarded, String? themeId}) =>
+      AppPrefs(
         deviceId: deviceId ?? this.deviceId,
         onboarded: onboarded ?? this.onboarded,
+        themeId: themeId ?? this.themeId,
       );
 }
 
@@ -28,7 +38,11 @@ class IsarAppPrefsRepository implements AppPrefsRepository {
   Future<AppPrefs?> load() async {
     final e = await isar.appPrefsEntitys.get(0);
     if (e == null) return null;
-    return AppPrefs(deviceId: e.deviceId, onboarded: e.onboarded);
+    return AppPrefs(
+      deviceId: e.deviceId,
+      onboarded: e.onboarded,
+      themeId: e.themeId,
+    );
   }
 
   @override
@@ -38,7 +52,8 @@ class IsarAppPrefsRepository implements AppPrefsRepository {
         AppPrefsEntity()
           ..id = 0
           ..deviceId = prefs.deviceId
-          ..onboarded = prefs.onboarded,
+          ..onboarded = prefs.onboarded
+          ..themeId = prefs.themeId,
       );
     });
   }

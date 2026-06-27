@@ -9,7 +9,10 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.res.ColorStateList
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.view.View
 import android.widget.RemoteViews
@@ -72,6 +75,50 @@ private object WidgetData {
     }
 }
 
+/**
+ * Theme tokens pushed by the Flutter app (`HomeWidgetService.refresh`). Read on
+ * every render so the native widget recolors on its 60s self-update tick even
+ * with the app closed. Defaults reproduce the original Liquid Glass look, so an
+ * un-themed install (no keys yet) is unchanged.
+ */
+private data class WTheme(
+    val bgTop: Int,
+    val bgBottom: Int,
+    val textPrimary: Int,
+    val textSecondary: Int,
+    val accent: Int,
+    val primary: Int,
+    val secondary: Int,
+    val radiusDp: Float,
+    val ramp: String,
+    val labelCurrent: String,
+    val labelUpnext: String,
+    val labelBreak: String,
+)
+
+private object WidgetTheme {
+    private fun parse(s: String?, def: Int): Int =
+        try { if (s.isNullOrEmpty()) def else Color.parseColor(s) } catch (e: Exception) { def }
+
+    fun load(context: Context): WTheme {
+        val p = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        return WTheme(
+            bgTop = parse(p.getString("theme_bg_top", null), Color.parseColor("#FF323B4A")),
+            bgBottom = parse(p.getString("theme_bg_bottom", null), Color.parseColor("#FF161B22")),
+            textPrimary = parse(p.getString("theme_text_primary", null), Color.WHITE),
+            textSecondary = parse(p.getString("theme_text_secondary", null), Color.parseColor("#B8C0CC")),
+            accent = parse(p.getString("theme_accent", null), Color.parseColor("#FF5965C8")),
+            primary = parse(p.getString("theme_primary", null), Color.parseColor("#FF5965C8")),
+            secondary = parse(p.getString("theme_secondary", null), Color.parseColor("#FF8A93E0")),
+            radiusDp = p.getString("theme_radius", null)?.toFloatOrNull() ?: 26f,
+            ramp = p.getString("theme_progress_ramp", null) ?: "redGreen",
+            labelCurrent = p.getString("theme_label_current", null) ?: "IN PROGRESS",
+            labelUpnext = p.getString("theme_label_upnext", null) ?: "UP NEXT",
+            labelBreak = p.getString("theme_label_break", null) ?: "ON BREAK",
+        )
+    }
+}
+
 object WidgetRenderer {
     private val MONTHS = arrayOf(
         "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -84,6 +131,9 @@ object WidgetRenderer {
             R.layout.widget_native_large else R.layout.widget_native_compact
         val v = RemoteViews(context.packageName, layout)
         setClick(context, v)
+
+        val theme = WidgetTheme.load(context)
+        applyTheme(context, mgr, id, v, theme)
 
         val cal = Calendar.getInstance()
         val weekday = isoWeekday(cal)
@@ -105,7 +155,7 @@ object WidgetRenderer {
             setBody(v, "", "No classes today", nextText(days, weekday))
         } else if (minutes < today.first().s) {
             val f = today.first()
-            setBody(v, "UP NEXT", f.title, "Starts ${hm(f.s)}${roomSuffix(f.room)}")
+            setBody(v, theme.labelUpnext, f.title, "Starts ${hm(f.s)}${roomSuffix(f.room)}")
         } else if (minutes >= today.last().e) {
             setBody(v, "DONE", "Classes are over", nextText(days, weekday))
         } else {
@@ -114,47 +164,89 @@ object WidgetRenderer {
                 cur == null -> {
                     val nx = today.firstOrNull { it.s > minutes }
                     setBody(
-                        v, "UP NEXT", nx?.title ?: "Free",
+                        v, theme.labelUpnext, nx?.title ?: "Free",
                         if (nx != null) "Starts ${hm(nx.s)}${roomSuffix(nx.room)}" else "",
                     )
                 }
                 cur.isBreak -> {
-                    setBody(
-                        v,
-                        if (cur.kind == "lunch") "LUNCH BREAK" else "TEA BREAK",
-                        "On a break", "Ends ${hm(cur.e)}",
-                    )
-                    setProgress(v, cur, minutes)
+                    // Keep the lunch/tea distinction unless a pack overrides the
+                    // generic break label.
+                    val breakLabel = if (theme.labelBreak != "ON BREAK") theme.labelBreak
+                        else if (cur.kind == "lunch") "LUNCH BREAK" else "TEA BREAK"
+                    setBody(v, breakLabel, "On a break", "Ends ${hm(cur.e)}")
+                    setProgress(v, cur, minutes, theme)
                 }
                 else -> {
                     setBody(
-                        v, "IN PROGRESS", cur.title,
+                        v, theme.labelCurrent, cur.title,
                         "Ends ${hm(cur.e)}${roomSuffix(cur.room)}",
                     )
-                    setProgress(v, cur, minutes)
+                    setProgress(v, cur, minutes, theme)
                 }
             }
         }
 
         if (variant == Variant.LARGE) {
-            fillList(context, v, today, minutes)
+            fillList(context, v, today, minutes, theme)
         } else {
             // Compact (small/medium): show the live % complete + the next two
             // classes. These view ids only exist in the compact layout.
-            setCompactExtras(v, today, minutes, nowSec)
+            setCompactExtras(v, today, minutes, nowSec, theme)
         }
 
         mgr.updateAppWidget(id, v)
     }
 
-    /** Live % complete (tinted on the red→green ramp) + the next two classes. */
-    private fun setCompactExtras(v: RemoteViews, today: List<Entry>, minutes: Int, nowSec: Int) {
+    /** Paints the themed background bitmap and recolors all text views. */
+    private fun applyTheme(
+        context: Context,
+        mgr: AppWidgetManager,
+        id: Int,
+        v: RemoteViews,
+        theme: WTheme,
+    ) {
+        // Background: a rounded GradientDrawable rasterized to the widget's px
+        // size, set on the w_bg ImageView (keeps rounded corners + gradient).
+        val dm = context.resources.displayMetrics
+        val opts = mgr.getAppWidgetOptions(id)
+        val minWdp = opts?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0) ?: 0
+        val minHdp = opts?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0) ?: 0
+        val wPx = (((if (minWdp > 0) minWdp else 160)) * dm.density).toInt().coerceIn(1, 1400)
+        val hPx = (((if (minHdp > 0) minHdp else 160)) * dm.density).toInt().coerceIn(1, 1600)
+        val gd = GradientDrawable(
+            GradientDrawable.Orientation.TOP_BOTTOM,
+            intArrayOf(theme.bgTop, theme.bgBottom),
+        )
+        gd.cornerRadius = theme.radiusDp * dm.density
+        gd.setBounds(0, 0, wPx, hPx)
+        val bmp = Bitmap.createBitmap(wPx, hPx, Bitmap.Config.ARGB_8888)
+        gd.draw(Canvas(bmp))
+        v.setImageViewBitmap(R.id.w_bg, bmp)
+
+        // Text colors.
+        v.setTextColor(R.id.w_day, theme.textPrimary)
+        v.setTextColor(R.id.w_date, theme.textSecondary)
+        v.setTextColor(R.id.w_status, theme.textPrimary)
+        v.setTextColor(R.id.w_title, theme.textPrimary)
+        v.setTextColor(R.id.w_subtitle, theme.textSecondary)
+    }
+
+    /** Live % complete (tinted on the active theme's ramp) + the next two classes. */
+    private fun setCompactExtras(
+        v: RemoteViews,
+        today: List<Entry>,
+        minutes: Int,
+        nowSec: Int,
+        theme: WTheme,
+    ) {
+        v.setTextColor(R.id.w_next, theme.textSecondary)
+        v.setTextColor(R.id.w_after, theme.textSecondary)
         val cur = today.firstOrNull { minutes >= it.s && minutes < it.e && !it.isBreak }
         if (cur != null) {
             val total = ((cur.e - cur.s) * 60).coerceAtLeast(1)
             val done = (nowSec - cur.s * 60).coerceIn(0, total)
             val frac = done.toFloat() / total
-            val color = progressColor(frac)
+            val color = progressColor(frac, theme)
             v.setTextViewText(R.id.w_pct, "${(frac * 100).toInt()}%")
             v.setTextColor(R.id.w_pct, color)
             v.setViewVisibility(R.id.w_pct, View.VISIBLE)
@@ -182,21 +274,43 @@ object WidgetRenderer {
     }
 
     /**
-     * The shared red→green ramp, matching the Flutter `Wx.progressColor`:
-     * #FF0000 → #FF5500 → #FFAA00 → #FFFF00 → #AAFF00 → #55FF00 → #00FF00.
+     * Live class-progress color. The ramp is selected by the active theme's
+     * `ProgressRamp` name — MUST stay in parity with the Flutter
+     * `Wx.progressColor` (same name → same math).
+     *
+     *   redGreen: #FF0000 → … → #00FF00 (the original ramp)
+     *   mono:     a single accent hue (progress reads from the bar length)
+     *   neon:     cool secondary → warm primary across the period
      */
-    fun progressColor(t: Float): Int {
+    private fun progressColor(t: Float, theme: WTheme): Int {
         val x = t.coerceIn(0f, 1f)
-        val r: Int
-        val g: Int
-        if (x <= 0.5f) {
-            r = 255
-            g = (510 * x).toInt()
-        } else {
-            r = (255 - 510 * (x - 0.5f)).toInt()
-            g = 255
+        return when (theme.ramp) {
+            "mono" -> theme.accent
+            "neon" -> lerpColor(theme.secondary, theme.primary, x)
+            else -> {
+                val r: Int
+                val g: Int
+                if (x <= 0.5f) {
+                    r = 255
+                    g = (510 * x).toInt()
+                } else {
+                    r = (255 - 510 * (x - 0.5f)).toInt()
+                    g = 255
+                }
+                Color.rgb(r.coerceIn(0, 255), g.coerceIn(0, 255), 0)
+            }
         }
-        return Color.rgb(r.coerceIn(0, 255), g.coerceIn(0, 255), 0)
+    }
+
+    private fun lerpColor(a: Int, b: Int, t: Float): Int {
+        val u = t.coerceIn(0f, 1f)
+        fun ch(s: Int, e: Int) = (s + (e - s) * u).toInt().coerceIn(0, 255)
+        return Color.argb(
+            255,
+            ch(Color.red(a), Color.red(b)),
+            ch(Color.green(a), Color.green(b)),
+            ch(Color.blue(a), Color.blue(b)),
+        )
     }
 
     private fun setBody(v: RemoteViews, status: String, title: String, subtitle: String) {
@@ -206,14 +320,28 @@ object WidgetRenderer {
         v.setTextViewText(R.id.w_subtitle, subtitle)
     }
 
-    private fun setProgress(v: RemoteViews, cur: Entry, minutes: Int) {
+    private fun setProgress(v: RemoteViews, cur: Entry, minutes: Int, theme: WTheme) {
         val total = (cur.e - cur.s).coerceAtLeast(1)
         val done = (minutes - cur.s).coerceIn(0, total)
         v.setViewVisibility(R.id.w_progress, View.VISIBLE)
         v.setProgressBar(R.id.w_progress, total, done, false)
+        if (Build.VERSION.SDK_INT >= 31) {
+            val frac = done.toFloat() / total
+            v.setColorStateList(
+                R.id.w_progress,
+                "setProgressTintList",
+                ColorStateList.valueOf(progressColor(frac, theme)),
+            )
+        }
     }
 
-    private fun fillList(context: Context, v: RemoteViews, today: List<Entry>, minutes: Int) {
+    private fun fillList(
+        context: Context,
+        v: RemoteViews,
+        today: List<Entry>,
+        minutes: Int,
+        theme: WTheme,
+    ) {
         v.removeAllViews(R.id.w_list)
         var p = 0
         for (e in today) {
@@ -221,8 +349,11 @@ object WidgetRenderer {
             if (e.e <= minutes || e.isBreak) continue // list only upcoming classes
             val row = RemoteViews(context.packageName, R.layout.widget_native_row)
             row.setTextViewText(R.id.row_p, "P$p")
+            row.setTextColor(R.id.row_p, theme.textPrimary)
             row.setTextViewText(R.id.row_title, e.title)
+            row.setTextColor(R.id.row_title, theme.textPrimary)
             row.setTextViewText(R.id.row_time, "${hm(e.s)}–${hm(e.e)}${roomSuffix(e.room)}")
+            row.setTextColor(R.id.row_time, theme.textSecondary)
             v.addView(R.id.w_list, row)
         }
     }

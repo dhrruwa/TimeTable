@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/timetable_import_service.dart';
+import '../theme/theme_catalog.dart';
+import '../theme/theme_model.dart';
+import 'community_providers.dart';
 
 /// Ticks once a minute (and immediately on subscribe) so "now / next / %" UI
 /// stays current without the user refreshing.
@@ -24,6 +27,15 @@ final secondClockProvider = StreamProvider.autoDispose<DateTime>((ref) async* {
 
 /// App theme mode. Defaults to following the system; toggled from the UI.
 final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.system);
+
+/// The selected theme pack id, sourced from persisted [AppPrefs] and updated
+/// when the user applies a pack from the Theme Store.
+final selectedThemeIdProvider =
+    Provider<String>((ref) => ref.watch(appPrefsProvider).themeId);
+
+/// The resolved active [ThemeModel] every render target reads from.
+final activeThemeProvider =
+    Provider<ThemeModel>((ref) => themeById(ref.watch(selectedThemeIdProvider)));
 
 /// Whether the weekly grid includes Saturday's later activities expanded.
 final showSundayProvider = StateProvider<bool>((ref) => false);

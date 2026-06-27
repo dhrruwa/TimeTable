@@ -31,4 +31,11 @@ class AppPrefsNotifier extends StateNotifier<AppPrefs> {
     state = state.copyWith(onboarded: true);
     await _repo.save(state);
   }
+
+  /// Apply and persist a theme pack selection.
+  Future<void> setTheme(String themeId) async {
+    if (state.themeId == themeId) return;
+    state = state.copyWith(themeId: themeId);
+    await _repo.save(state);
+  }
 }
