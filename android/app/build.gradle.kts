@@ -7,7 +7,9 @@ plugins {
 android {
     namespace = "com.example.timetable"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    // Pin to the NDK a plugin requires (AGP resolves to the max requested across
+    // modules — 28.2.13676358 here — so it must be installed and pinned).
+    ndkVersion = "28.2.13676358"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

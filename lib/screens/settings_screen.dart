@@ -188,7 +188,7 @@ class SettingsScreen extends ConsumerWidget {
 }
 
 /// Horizontal strip of the computed period times — recomputes instantly as the
-/// config changes: "P1 8:30 · P2 9:20 · ☕ · P3 9:35 · …".
+/// config changes: "P1 8:30 · P2 9:20 · Tea · P3 9:35 · …".
 class _PeriodPreviewStrip extends StatelessWidget {
   final TimetableConfig cfg;
   const _PeriodPreviewStrip({required this.cfg});
@@ -229,7 +229,7 @@ class _PeriodPreviewStrip extends StatelessWidget {
           ),
         );
 
-    Widget breakChip(String emoji) => Container(
+    Widget breakChip(IconData icon) => Container(
           margin: const EdgeInsets.only(right: 8),
           width: 34,
           height: 38,
@@ -238,18 +238,18 @@ class _PeriodPreviewStrip extends StatelessWidget {
             color: scheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Text(emoji, style: const TextStyle(fontSize: 16)),
+          child: Icon(icon, size: 18, color: scheme.onSurfaceVariant),
         );
 
     for (var i = 1; i <= 8; i++) {
       chips.add(periodChip('P$i', _hm(cursor)));
       cursor += cfg.classMins;
       if (i == cfg.teaAfter && cfg.teaMins > 0) {
-        chips.add(breakChip('☕'));
+        chips.add(breakChip(Icons.local_cafe));
         cursor += cfg.teaMins;
       }
       if (i == cfg.lunchAfter && cfg.lunchMins > 0) {
-        chips.add(breakChip('🍽'));
+        chips.add(breakChip(Icons.restaurant));
         cursor += cfg.lunchMins;
       }
       if (cursor >= 22 * 60) break; // don't run past ~10pm

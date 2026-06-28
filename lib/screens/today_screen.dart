@@ -137,7 +137,7 @@ class _NextDayView extends StatelessWidget {
         child: EmptyState(
           icon: Icons.celebration_outlined,
           title: 'No classes coming up',
-          message: 'Nothing scheduled in the week ahead. Enjoy the break! 🎉',
+          message: 'Nothing scheduled in the week ahead. Enjoy the break!',
         ),
       );
     }
@@ -146,16 +146,16 @@ class _NextDayView extends StatelessWidget {
     final isTomorrow = n.offset == 1;
     final isWeekendJump = n.weekday == DateTime.monday && n.offset > 1;
     final heading = isTomorrow
-        ? '🌙 Tomorrow'
+        ? 'Tomorrow'
         : isWeekendJump
-            ? '🎒 Next week'
-            : '🌙 Next';
+            ? 'Next week'
+            : 'Next';
     final dateLabel =
         '${TimeUtils.dayName(n.weekday)}, ${n.date.day} ${TodayScreen._month(n.date.month)}';
     final restNote = isWeekendJump
         ? "Enjoy your weekend! Monday's first class is at "
-            "${TimeUtils.formatMinutes(context, n.tl.first.startMin)} 🎒"
-        : 'Get some rest and be ready for tomorrow! 💤';
+            "${TimeUtils.formatMinutes(context, n.tl.first.startMin)}"
+        : 'Get some rest and be ready for tomorrow!';
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
@@ -170,7 +170,7 @@ class _NextDayView extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("Today's classes are done ✅",
+              Text("✓ Today's classes are done",
                   style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 4),
               Text('Here is what is coming up next.',

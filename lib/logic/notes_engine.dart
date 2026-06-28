@@ -27,14 +27,14 @@ class NotesEngine {
       final pct = attendancePct[p.subjectId];
       if (pct != null && pct < 0.70) {
         final name = byId[p.subjectId]?.name ?? 'a subject';
-        return "⚠️ $name attendance is ${(pct * 100).round()}% — don't skip today.";
+        return "! $name attendance is ${(pct * 100).round()}% — don't skip today.";
       }
     }
 
     // 2. Lab today.
     final lab = todays.where((e) => e.isLab).toList();
     if (lab.isNotEmpty) {
-      return '🥽 You have ${lab.first.title} today — come prepared!';
+      return 'You have ${lab.first.title} today — come prepared!';
     }
 
     // 3. Early first class tomorrow.
@@ -47,13 +47,13 @@ class NotesEngine {
     final lastEnd = todays.isEmpty ? 0 : todays.last.endMin;
     final afterClasses = now.hour * 60 + now.minute >= lastEnd;
     if (afterClasses && tmrw.isNotEmpty && tmrw.first.startMin <= 9 * 60) {
-      return '🌙 Early start tomorrow — first class at '
+      return 'Early start tomorrow — first class at '
           '${_hm(tmrw.first.startMin)}. Rest up!';
     }
 
     // 4. Evening prep.
     if (afterClasses && todays.isNotEmpty) {
-      return '🎒 Day done. Get tomorrow sorted and rest well.';
+      return 'Day done. Get tomorrow sorted and rest well.';
     }
 
     // 5. Generic pool, stable per weekday.
@@ -68,12 +68,12 @@ class NotesEngine {
   }
 
   static const _generic = [
-    'Every class is one step closer to your degree 🎓',
-    "Show up. That's already half the battle 💪",
-    'Your future self will thank you for attending today 🙏',
-    "One period at a time. You've got this ⚡",
-    'Consistency beats intensity. Be consistent 📈',
-    'Small steps every day add up to big results 🚀',
-    'Focus on today — tomorrow takes care of itself 🌱',
+    'Every class is one step closer to your degree',
+    "Show up. That's already half the battle",
+    'Your future self will thank you for attending today',
+    "One period at a time. You've got this",
+    'Consistency beats intensity. Be consistent',
+    'Small steps every day add up to big results',
+    'Focus on today — tomorrow takes care of itself',
   ];
 }

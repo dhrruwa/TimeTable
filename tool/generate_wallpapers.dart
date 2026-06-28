@@ -217,7 +217,7 @@ Future<int> main(List<String> argv) async {
     dir.createSync(recursive: true);
     var made = 0;
     for (var i = 1; i <= n; i++) {
-      final marker = File('${dir.path}/${i}_large.png');
+      final marker = File('${dir.path}/${i}_large.jpg');
       if (!force && marker.existsSync()) {
         stdout.writeln('  [$i] exists, skipping');
         made = i;
@@ -246,10 +246,10 @@ Future<int> main(List<String> argv) async {
       }
       for (final s in _sizes.entries) {
         if (s.key == 'preview') continue; // preview written once per pack below
-        _writeVariant(master, s.value, '${dir.path}/${i}_${s.key}.png');
+        _writeVariant(master, s.value, '${dir.path}/${i}_${s.key}.jpg');
       }
       if (i == 1) {
-        _writeVariant(master, _sizes['preview']!, '${dir.path}/preview.png');
+        _writeVariant(master, _sizes['preview']!, '${dir.path}/preview.jpg');
       }
       made = i;
       generated++;
@@ -398,7 +398,8 @@ void _writeVariant(img.Image master, List<int> spec, String path) {
   final aspectW = spec[0], aspectH = spec[1], outW = spec[2], outH = spec[3];
   final cropped = _centerCrop(master, aspectW / aspectH);
   final resized = img.copyResize(cropped, width: outW, height: outH);
-  File(path).writeAsBytesSync(img.encodePng(resized));
+  // JPEG keeps the app bundle small (photos compress far better than PNG).
+  File(path).writeAsBytesSync(img.encodeJpg(resized, quality: 80));
 }
 
 img.Image _centerCrop(img.Image src, double targetAspect) {

@@ -593,8 +593,11 @@ class _HeaderRow extends StatelessWidget {
                     color: scheme.surfaceContainerHighest.withValues(alpha: 0.4),
                     border: Border(right: grid, bottom: grid)),
                 alignment: Alignment.center,
-                child: Text(col.breakKind == EntryKind.tea ? '☕' : '🍽',
-                    style: const TextStyle(fontSize: 15)),
+                child: Icon(
+                    col.breakKind == EntryKind.tea
+                        ? Icons.local_cafe
+                        : Icons.restaurant,
+                    size: 15),
               )
             else
               _PeriodHeaderCell(

@@ -290,7 +290,7 @@ export default function DownloadSection() {
                         className="flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-gradient-to-r from-blue-900 to-sky-500 hover:from-blue-950 hover:to-sky-600 text-white font-extrabold text-sm shadow-md transition-all cursor-pointer w-full sm:w-auto"
                       >
                         <ArrowDownToLine className="w-4.5 h-4.5 animate-bounce" />
-                        Download Android APK (~74MB) {downloadCount !== null ? `(${downloadCount})` : ''}
+                        Download Android APK (~86MB) {downloadCount !== null ? `(${downloadCount})` : ''}
                       </button>
 
                       <div className="flex items-center gap-1 text-xs text-slate-500 font-semibold">

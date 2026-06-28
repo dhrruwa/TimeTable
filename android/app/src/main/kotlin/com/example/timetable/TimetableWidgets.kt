@@ -270,7 +270,7 @@ object WidgetRenderer {
             Variant.MEDIUM -> "medium"
             Variant.LARGE -> "large"
         }
-        val path = "flutter_assets/assets/theme_packs/${theme.assetPack}/${idx}_$sizeName.png"
+        val path = "flutter_assets/assets/theme_packs/${theme.assetPack}/${idx}_$sizeName.jpg"
         val src = try {
             context.assets.open(path).use { BitmapFactory.decodeStream(it) }
         } catch (e: Exception) {

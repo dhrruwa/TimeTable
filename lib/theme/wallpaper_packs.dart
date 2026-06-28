@@ -46,10 +46,10 @@ class WallpaperPacks {
   static String? asset(String pack, String size, DateTime now) {
     final i = indexFor(pack, now);
     if (i == 0) return null;
-    return 'assets/theme_packs/$pack/${i}_$size.png';
+    return 'assets/theme_packs/$pack/${i}_$size.jpg';
   }
 
   /// The store preview image for [pack], or null if not generated yet.
   static String? preview(String pack) =>
-      has(pack) ? 'assets/theme_packs/$pack/preview.png' : null;
+      has(pack) ? 'assets/theme_packs/$pack/preview.jpg' : null;
 }

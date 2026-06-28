@@ -204,7 +204,7 @@ class HomeWidgetService {
           var p = 0;
           for (final e in tl) {
             if (e.isBreak) {
-              parts.add(e.kind == EntryKind.lunch ? '🍽' : '☕');
+              parts.add(e.kind == EntryKind.lunch ? 'Lunch' : 'Tea');
             } else {
               p++;
               parts.add('P$p ${e.title}');
