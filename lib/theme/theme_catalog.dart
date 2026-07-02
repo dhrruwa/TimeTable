@@ -11,10 +11,10 @@ const List<ThemeModel> kThemePacks = [
   _liquidGlass,
   _anime,
   _space,
-  _marvel,
+  _hero,
   _cyberpunk,
   _gaming,
-  _formula1,
+  _racing,
   _music,
   _nature,
   _retroPixel,
@@ -29,7 +29,7 @@ ThemeModel themeById(String id) =>
 const _liquidGlass = ThemeModel(
   id: 'liquid_glass',
   assetPack: 'liquid_glass',
-  name: 'Liquid Glass',
+  name: 'Frosted Glass',
   description: 'Calm glossy dark glass — the signature look.',
   brightness: Brightness.dark,
   primary: Color(0xFF5965C8),
@@ -109,12 +109,12 @@ const _space = ThemeModel(
   labels: ThemeLabels(),
 );
 
-// ── 4. Marvel — futuristic HUD ───────────────────────────────────────────────
-const _marvel = ThemeModel(
-  id: 'marvel',
-  assetPack: 'marvel',
-  name: 'Marvel',
-  description: 'Metallic HUD, energy glow, scan lines.',
+// ── 4. Hero HUD — futuristic sci-fi HUD ──────────────────────────────────────
+const _hero = ThemeModel(
+  id: 'hero',
+  assetPack: 'hero',
+  name: 'Hero HUD',
+  description: 'Holographic HUD, energy glow, scan lines.',
   brightness: Brightness.dark,
   primary: Color(0xFFE23636),
   secondary: Color(0xFFE0A93B),
@@ -208,11 +208,11 @@ const _gaming = ThemeModel(
   ),
 );
 
-// ── 7. Formula 1 — telemetry ─────────────────────────────────────────────────
-const _formula1 = ThemeModel(
-  id: 'formula1',
-  assetPack: 'formula1',
-  name: 'Formula 1',
+// ── 7. Racing — telemetry ────────────────────────────────────────────────────
+const _racing = ThemeModel(
+  id: 'racing',
+  assetPack: 'racing',
+  name: 'Racing',
   description: 'Telemetry dashboard in red and carbon black.',
   brightness: Brightness.dark,
   primary: Color(0xFFE10600),

@@ -1,12 +1,12 @@
 {
-  "liquid_glass": 3,
   "anime": 3,
-  "space": 3,
-  "marvel": 3,
   "cyberpunk": 3,
   "gaming": 3,
-  "formula1": 3,
+  "hero": 3,
+  "liquid_glass": 3,
   "music": 3,
   "nature": 3,
-  "pixel": 3
+  "pixel": 3,
+  "racing": 3,
+  "space": 3
 }

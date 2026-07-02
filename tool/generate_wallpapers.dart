@@ -98,16 +98,16 @@ final _packs = <String, _Pack>{
       'deep universe with distant galaxies and cosmic dust',
     ],
   ),
-  'marvel': _Pack(
-    'cinematic superhero concept art, futuristic HUD, metallic sheen, energy '
-        'glow, comic-inspired but realistic',
+  'hero': _Pack(
+    'original futuristic sci-fi HUD aesthetic, holographic interface, glowing '
+        'energy, brushed metal, cinematic concept art, no branded characters',
     [
-      'glowing arc-reactor energy core, high-tech metallic chamber',
-      'futuristic heads-up display interface with holographic rings',
-      'red and gold metallic armor surface, polished, dramatic light',
-      'comic-style city skyline at dusk with dynamic energy streaks',
-      'high-tech command interface with glowing data panels',
-      'sleek hero gauntlet emitting energy, dark studio backdrop',
+      'glowing circular energy reactor in a high-tech metallic chamber',
+      'futuristic holographic heads-up display with concentric glowing rings',
+      'brushed metal tech panel with amber and crimson highlights',
+      'futuristic city skyline at dusk with glowing energy streaks',
+      'high-tech command console with glowing data readouts',
+      'abstract sci-fi armored surface with pulsing energy lines, dark studio',
     ],
   ),
   'cyberpunk': _Pack(
@@ -134,16 +134,16 @@ final _packs = <String, _Pack>{
       'abstract dark wallpaper with neon RGB light streaks',
     ],
   ),
-  'formula1': _Pack(
-    'motorsport telemetry aesthetic, carbon fiber, red and carbon-black, '
-        'high-speed cinematic, racing energy',
+  'racing': _Pack(
+    'generic motorsport telemetry aesthetic, carbon fiber, red and carbon-black, '
+        'high-speed cinematic, no brand logos, no team liveries, no trademarks',
     [
-      'formula one race track from above with grid markings',
-      'pit lane with motion blur and racing lights',
+      'generic race track seen from above with grid markings',
+      'pit lane at night with motion blur and lights, no logos',
       'glowing speedometer and telemetry dashboard, red accents',
       'carbon fiber texture surface with red highlight',
-      'racing telemetry overlay graphics on a dark track background',
-      'racing cockpit view down a straight at high speed',
+      'abstract racing telemetry graphics on a dark background',
+      'unbranded race car cockpit view down a straight at high speed',
     ],
   ),
   'music': _Pack(
@@ -203,7 +203,16 @@ Future<int> main(List<String> argv) async {
   final client = HttpClient()
     ..idleTimeout = const Duration(seconds: 120)
     ..connectionTimeout = const Duration(seconds: 60);
+  // Start from the existing manifest so a partial run (e.g. --packs=hero) updates
+  // only those packs instead of wiping every other pack's count.
   final manifest = <String, int>{};
+  final manifestFile = File('${outRoot.path}/manifest.json');
+  if (manifestFile.existsSync()) {
+    try {
+      final prev = jsonDecode(manifestFile.readAsStringSync()) as Map<String, dynamic>;
+      prev.forEach((k, v) => manifest[k] = (v as num).toInt());
+    } catch (_) {}
+  }
   var generated = 0, skipped = 0, failed = 0;
 
   for (final entry in _packs.entries) {

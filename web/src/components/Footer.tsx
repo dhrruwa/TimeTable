@@ -93,7 +93,7 @@ export default function Footer() {
           <div className="space-y-4">
             <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-widest">Learn More</h3>
             <ul className="space-y-2.5 text-xs text-slate-500 font-semibold">
-              <li><a href="#" className="hover:text-slate-800 transition-colors">Privacy Policy</a></li>
+              <li><a href="/privacy" className="hover:text-slate-800 transition-colors">Privacy Policy</a></li>
               <li><a href="#" className="hover:text-slate-800 transition-colors">Terms of Service</a></li>
               <li><a href="#" className="hover:text-slate-800 transition-colors">Security Details</a></li>
               <li><a href="/admin" className="hover:text-slate-800 transition-colors flex items-center gap-1"><RefreshCw className="w-3 h-3 text-sky-500" /> Admin Access</a></li>
