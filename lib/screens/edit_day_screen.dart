@@ -24,7 +24,7 @@ class EditDayScreen extends ConsumerWidget {
     final t = ref.watch(timetableProvider);
     final periods = t.periodsOn(weekday);
     final timeline =
-        TimetableBuilder.buildDay(periods, t.subjectsById, t.config);
+        TimetableBuilder.buildDay(periods, t.subjectsById, t.configFor(weekday));
     // Map period id -> its computed class entry (for showing times).
     final classEntries = timeline.where((e) => e.isClass).toList();
 

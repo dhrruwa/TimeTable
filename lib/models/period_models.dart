@@ -232,13 +232,19 @@ class TimetableMeta {
 class Timetable {
   final List<Subject> subjects;
   final Map<int, List<Period>> week; // 1=Mon .. 6=Sat
-  final TimetableConfig config;
+  final TimetableConfig config; // default timing, used by days without an override
+
+  /// Optional per-weekday timing overrides (1=Mon .. 6=Sat). A day not present
+  /// here uses [config]. This lets start time, break positions, and lengths vary
+  /// per day without touching the default.
+  final Map<int, TimetableConfig> dayConfigs;
   final TimetableMeta meta;
 
   const Timetable({
     this.subjects = const [],
     this.week = const {},
     this.config = const TimetableConfig(),
+    this.dayConfigs = const {},
     this.meta = const TimetableMeta(),
   });
 
@@ -253,16 +259,24 @@ class Timetable {
 
   List<Period> periodsOn(int weekday) => week[weekday] ?? const [];
 
+  /// The effective timing config for [weekday] — its override, or the default.
+  TimetableConfig configFor(int weekday) => dayConfigs[weekday] ?? config;
+
+  /// Whether [weekday] has its own timing (differs from the default).
+  bool hasDayOverride(int weekday) => dayConfigs.containsKey(weekday);
+
   Timetable copyWith({
     List<Subject>? subjects,
     Map<int, List<Period>>? week,
     TimetableConfig? config,
+    Map<int, TimetableConfig>? dayConfigs,
     TimetableMeta? meta,
   }) =>
       Timetable(
         subjects: subjects ?? this.subjects,
         week: week ?? this.week,
         config: config ?? this.config,
+        dayConfigs: dayConfigs ?? this.dayConfigs,
         meta: meta ?? this.meta,
       );
 
@@ -273,6 +287,9 @@ class Timetable {
               MapEntry('$day', periods.map((p) => p.toJson()).toList()),
         ),
         'config': config.toJson(),
+        if (dayConfigs.isNotEmpty)
+          'dayConfigs':
+              dayConfigs.map((day, c) => MapEntry('$day', c.toJson())),
         'meta': meta.toJson(),
       };
 
@@ -284,6 +301,12 @@ class Timetable {
           .map((e) => Period.fromJson(e as Map<String, dynamic>))
           .toList();
     });
+    final dayConfigs = <int, TimetableConfig>{};
+    final rawDayConfigs = (j['dayConfigs'] as Map<String, dynamic>? ?? {});
+    rawDayConfigs.forEach((day, c) {
+      dayConfigs[int.parse(day)] =
+          TimetableConfig.fromJson(c as Map<String, dynamic>);
+    });
     return Timetable(
       subjects: (j['subjects'] as List<dynamic>? ?? [])
           .map((e) => Subject.fromJson(e as Map<String, dynamic>))
@@ -291,6 +314,7 @@ class Timetable {
       week: week,
       config: TimetableConfig.fromJson(
           (j['config'] as Map<String, dynamic>?) ?? const {}),
+      dayConfigs: dayConfigs,
       meta: TimetableMeta.fromJson(
           (j['meta'] as Map<String, dynamic>?) ?? const {}),
     );

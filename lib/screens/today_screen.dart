@@ -119,7 +119,7 @@ class _NextDayView extends StatelessWidget {
       final tl = TimetableBuilder.buildDay(
         timetable.periodsOn(wd),
         timetable.subjectsById,
-        timetable.config,
+        timetable.configFor(wd),
       );
       if (tl.isNotEmpty) {
         next = (offset: off, date: date, weekday: wd, tl: tl);

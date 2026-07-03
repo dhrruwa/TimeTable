@@ -32,7 +32,7 @@ final timelineForDayProvider =
     Provider.family<List<TimelineEntry>, int>((ref, weekday) {
   final t = ref.watch(timetableProvider);
   return TimetableBuilder.buildDay(
-      t.periodsOn(weekday), t.subjectsById, t.config);
+      t.periodsOn(weekday), t.subjectsById, t.configFor(weekday));
 });
 
 class TimetableNotifier extends StateNotifier<Timetable> {
@@ -133,4 +133,18 @@ class TimetableNotifier extends StateNotifier<Timetable> {
 
   Future<void> setConfig(TimetableConfig config) =>
       _commit(state.copyWith(config: config));
+
+  /// Give [weekday] its own timing (overrides the default for that day).
+  Future<void> setDayConfig(int weekday, TimetableConfig config) {
+    final map = Map<int, TimetableConfig>.from(state.dayConfigs)
+      ..[weekday] = config;
+    return _commit(state.copyWith(dayConfigs: map));
+  }
+
+  /// Remove [weekday]'s override so it falls back to the default schedule.
+  Future<void> clearDayConfig(int weekday) {
+    final map = Map<int, TimetableConfig>.from(state.dayConfigs)
+      ..remove(weekday);
+    return _commit(state.copyWith(dayConfigs: map));
+  }
 }

@@ -177,7 +177,7 @@ class _LivePreview extends ConsumerWidget {
     final timeline = TimetableBuilder.buildDay(
       timetable.periodsOn(now.weekday),
       timetable.subjectsById,
-      timetable.config,
+      timetable.configFor(now.weekday),
     );
     return child(TodayEngine.compute(timeline, now));
   }

@@ -10,16 +10,33 @@ import '../widgets/weather/live_widget_preview.dart';
 
 /// Configure the bell schedule (day start, durations, break positions) and the
 /// app theme. Changes recompute every screen + the widgets instantly.
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final config = ref.watch(timetableProvider).config;
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  /// Which schedule is being edited: null = the default (all days), or a
+  /// weekday 1..6 to edit that day's override.
+  int? _editingDay;
+
+  static const _dayShort = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  @override
+  Widget build(BuildContext context) {
+    final tt = ref.watch(timetableProvider);
     final notifier = ref.read(timetableProvider.notifier);
     final themeMode = ref.watch(themeModeProvider);
 
-    void update(TimetableConfig c) => notifier.setConfig(c);
+    final day = _editingDay;
+    final config = day == null ? tt.config : tt.configFor(day);
+    final overridden = day != null && tt.hasDayOverride(day);
+
+    void update(TimetableConfig c) => day == null
+        ? notifier.setConfig(c)
+        : notifier.setDayConfig(day, c);
 
     final lunchInvalid = config.lunchAfter <= config.teaAfter;
 
@@ -28,6 +45,10 @@ class SettingsScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: 8),
         children: [
+          // Which day this schedule applies to.
+          _daySelector(context, tt),
+          if (day != null)
+            _dayOverrideBanner(context, day, overridden, notifier),
           // Live preview of the computed period times — updates as you tweak.
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
@@ -148,6 +169,78 @@ class SettingsScreen extends ConsumerWidget {
               title: Text(entry.value),
             ),
           const DhrruwaFooter(),
+        ],
+      ),
+    );
+  }
+
+  Widget _daySelector(BuildContext context, Timetable tt) {
+    final scheme = Theme.of(context).colorScheme;
+    Widget chip(String label, int? d) {
+      final selected = _editingDay == d;
+      final hasOverride = d != null && tt.hasDayOverride(d);
+      return Padding(
+        padding: const EdgeInsets.only(right: 8),
+        child: ChoiceChip(
+          label: Row(mainAxisSize: MainAxisSize.min, children: [
+            Text(label),
+            if (hasOverride) ...[
+              const SizedBox(width: 5),
+              Icon(Icons.circle,
+                  size: 7,
+                  color: selected
+                      ? scheme.onSecondaryContainer
+                      : scheme.primary),
+            ],
+          ]),
+          selected: selected,
+          onSelected: (_) => setState(() => _editingDay = d),
+        ),
+      );
+    }
+
+    return SizedBox(
+      height: 46,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        children: [
+          chip('All days', null),
+          for (var i = 0; i < 6; i++) chip(_dayShort[i], i + 1),
+        ],
+      ),
+    );
+  }
+
+  Widget _dayOverrideBanner(
+      BuildContext context, int day, bool overridden, dynamic notifier) {
+    final scheme = Theme.of(context).colorScheme;
+    final name = _dayShort[day - 1];
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+      padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          Icon(overridden ? Icons.edit_calendar : Icons.info_outline,
+              size: 18, color: scheme.primary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              overridden
+                  ? '$name has its own schedule.'
+                  : '$name uses the default. Change anything below to customize just this day.',
+              style: TextStyle(fontSize: 12.5, color: scheme.onSurfaceVariant),
+            ),
+          ),
+          if (overridden)
+            TextButton(
+              onPressed: () => notifier.clearDayConfig(day),
+              child: const Text('Reset'),
+            ),
         ],
       ),
     );

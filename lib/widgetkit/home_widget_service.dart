@@ -66,7 +66,7 @@ class HomeWidgetService {
     final timeline = TimetableBuilder.buildDay(
       timetable.periodsOn(weekday),
       timetable.subjectsById,
-      timetable.config,
+      timetable.configFor(weekday),
     );
     final status = TodayEngine.compute(timeline, at);
 
@@ -90,7 +90,7 @@ class HomeWidgetService {
       final tl = TimetableBuilder.buildDay(
         timetable.periodsOn(d),
         timetable.subjectsById,
-        timetable.config,
+        timetable.configFor(d),
       );
       timelines['$d'] = [
         for (final e in tl)
@@ -194,7 +194,7 @@ class HomeWidgetService {
           final tl = TimetableBuilder.buildDay(
             timetable.periodsOn(wd),
             timetable.subjectsById,
-            timetable.config,
+            timetable.configFor(wd),
           );
           if (tl.isEmpty) continue;
           final dl = '${_short[(wd - 1) % 7]}, ${d.day} ${_months[d.month - 1]}';
