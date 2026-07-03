@@ -11,7 +11,7 @@
         android:required="false" />
 
     <application
-        android:label="timetable"
+        android:label="Timetable"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
