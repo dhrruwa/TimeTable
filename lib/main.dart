@@ -14,7 +14,6 @@ import 'providers/widget_providers.dart';
 import 'screens/home_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'theme.dart';
-import 'theme/theme_catalog.dart';
 import 'theme/wallpaper_packs.dart';
 import 'widgets/weather/weather_style.dart';
 import 'widgetkit/deep_link_handler.dart';
@@ -81,18 +80,15 @@ class TimetableApp extends ConsumerWidget {
     // previews render with the active pack immediately.
     Wx.active = theme;
 
-    // The default pack still honors the user's light/dark/system choice; the
-    // vivid packs are designed dark-only, so pin them to dark.
-    final effectiveMode =
-        theme.id == kDefaultThemeId ? themeMode : ThemeMode.dark;
-
     return MaterialApp(
       title: 'Timetable',
       debugShowCheckedModeBanner: false,
       navigatorKey: DeepLinkHandler.navigatorKey,
       theme: AppTheme.light(theme),
       darkTheme: AppTheme.dark(theme),
-      themeMode: effectiveMode,
+      // Always honor the user's Light / Dark / System choice. The theme pack
+      // supplies the accent + widget wallpapers; the app chrome follows brightness.
+      themeMode: themeMode,
       home: DeepLinkHandler(
         child: _ThemeMorph(
           themeId: theme.id,

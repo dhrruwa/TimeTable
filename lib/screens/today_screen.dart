@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../logic/notes_engine.dart';
 import '../logic/timetable_builder.dart';
 import '../logic/today_engine.dart';
 import '../models/period_models.dart';
@@ -30,7 +29,6 @@ class TodayScreen extends ConsumerWidget {
     final timetable = ref.watch(timetableProvider);
     final timeline = ref.watch(timelineForDayProvider(weekday));
     final status = TodayEngine.compute(timeline, now);
-    final note = NotesEngine.pick(now: now, timetable: timetable);
 
     // Flip to next-day mode once today's classes are over (or there are none).
     final nextDayMode = status.dayOver || status.empty;
@@ -75,8 +73,6 @@ class TodayScreen extends ConsumerWidget {
                     status: status,
                     context: context,
                     labels: ref.watch(activeThemeProvider).labels),
-                const SizedBox(height: 14),
-                NoteCard(note: note),
                 const SizedBox(height: 24),
                 Text("Today's schedule",
                     style: Theme.of(context).textTheme.titleMedium),

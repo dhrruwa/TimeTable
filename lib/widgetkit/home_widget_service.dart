@@ -4,7 +4,6 @@ import 'dart:io' show Platform;
 import 'package:flutter/widgets.dart';
 import 'package:home_widget/home_widget.dart';
 
-import '../logic/notes_engine.dart';
 import '../logic/timetable_builder.dart';
 import '../logic/today_engine.dart';
 import '../models/period_models.dart';
@@ -182,7 +181,7 @@ class HomeWidgetService {
       await HomeWidget.saveWidgetData<String>('tt_day', weekdayFull);
       await HomeWidget.saveWidgetData<String>('tt_status', status.statusLine);
 
-      // Feature 4 — next-day preview + motivational note for the widget.
+      // Feature 4 — next-day preview for the widget.
       final isNextDay = status.dayOver || status.empty;
       var nextDayLabel = '';
       var nextDayPreview = '';
@@ -217,8 +216,7 @@ class HomeWidgetService {
       await HomeWidget.saveWidgetData<bool>('is_next_day_mode', isNextDay);
       await HomeWidget.saveWidgetData<String>('next_day_label', nextDayLabel);
       await HomeWidget.saveWidgetData<String>('next_day_preview', nextDayPreview);
-      await HomeWidget.saveWidgetData<String>(
-          'motivational_note', NotesEngine.pick(now: at, timetable: timetable));
+      await HomeWidget.saveWidgetData<String>('motivational_note', '');
       await HomeWidget.saveWidgetData<String>('attendance_warning', '');
 
       // Refresh each Android size widget + the iOS widget.

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/community_providers.dart';
@@ -6,201 +7,294 @@ import '../providers/providers.dart';
 import '../theme/theme_catalog.dart';
 import '../theme/theme_model.dart';
 import '../theme/wallpaper_packs.dart';
-import '../widgets/theme_mock.dart';
 import 'theme_preview_screen.dart';
 
-/// Browse, preview, and apply theme packs. Applying updates the in-app UI and
-/// every home-screen widget instantly (via [AppPrefsNotifier.setTheme] →
-/// [selectedThemeIdProvider] → the widget refresh listener).
+/// Wallpaper-forward theme picker. The active pack sits in a large featured
+/// card; every other pack is a tap-to-apply tile. Applying re-skins the app and
+/// all home-screen widgets instantly (via [AppPrefsNotifier.setTheme]).
 class ThemeStoreScreen extends ConsumerWidget {
   const ThemeStoreScreen({super.key});
 
+  void _apply(WidgetRef ref, ThemeModel t) {
+    HapticFeedback.selectionClick();
+    ref.read(appPrefsProvider.notifier).setTheme(t.id);
+  }
+
+  void _preview(BuildContext context, ThemeModel t) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => ThemePreviewScreen(theme: t)),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final scheme = Theme.of(context).colorScheme;
     final selectedId = ref.watch(selectedThemeIdProvider);
+    final current = kThemePacks.firstWhere((t) => t.id == selectedId,
+        orElse: () => kThemePacks.first);
+    final others = kThemePacks.where((t) => t.id != current.id).toList();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Theme Store'),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(28),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-              child: Text(
-                '${kThemePacks.length} packs — re-skins the app and your widgets',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+      body: SafeArea(
+        bottom: false,
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 6),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Themes',
+                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                              fontWeight: FontWeight.w800,
+                            )),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Tap to apply instantly — your home-screen widgets re-skin too.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
                     ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ),
-      ),
-      body: GridView.builder(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: 260,
-          mainAxisExtent: 300,
-          crossAxisSpacing: 14,
-          mainAxisSpacing: 14,
-        ),
-        itemCount: kThemePacks.length,
-        itemBuilder: (context, i) {
-          final theme = kThemePacks[i];
-          return _ThemeCard(
-            theme: theme,
-            selected: theme.id == selectedId,
-            index: i,
-            onApply: () => ref.read(appPrefsProvider.notifier).setTheme(theme.id),
-            onPreview: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => ThemePreviewScreen(theme: theme)),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 14, 20, 6),
+                child: _FeaturedCard(
+                  theme: current,
+                  onPreview: () => _preview(context, current),
+                ),
+              ),
             ),
-          );
-        },
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(22, 16, 20, 8),
+                child: Text('ALL THEMES',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.4,
+                      color: scheme.onSurfaceVariant,
+                    )),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 28),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 210,
+                  mainAxisExtent: 216,
+                  crossAxisSpacing: 14,
+                  mainAxisSpacing: 14,
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (context, i) {
+                    final t = others[i];
+                    return _ThemeTile(
+                      theme: t,
+                      index: i,
+                      onApply: () => _apply(ref, t),
+                      onPreview: () => _preview(context, t),
+                    );
+                  },
+                  childCount: others.length,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _ThemeCard extends StatefulWidget {
+/// Background: the pack's preview wallpaper, or its gradient if art is absent.
+Widget _themeBackground(ThemeModel theme) {
+  final img = WallpaperPacks.preview(theme.assetPack);
+  final fallback = DecoratedBox(
+    decoration: BoxDecoration(gradient: theme.background.linearGradient),
+  );
+  if (img == null) return fallback;
+  return Image.asset(img, fit: BoxFit.cover, errorBuilder: (_, __, ___) => fallback);
+}
+
+const _scrim = DecoratedBox(
+  decoration: BoxDecoration(
+    gradient: LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Color(0x00000000), Color(0x40000000), Color(0xCC000000)],
+      stops: [0.35, 0.7, 1.0],
+    ),
+  ),
+);
+
+/// Large hero for the currently-applied theme.
+class _FeaturedCard extends StatelessWidget {
   final ThemeModel theme;
-  final bool selected;
+  final VoidCallback onPreview;
+  const _FeaturedCard({required this.theme, required this.onPreview});
+
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: 16 / 9,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            _themeBackground(theme),
+            const Positioned.fill(child: _scrim),
+            // Applied badge.
+            Positioned(
+              top: 14,
+              right: 14,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: theme.accent,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(Icons.check_rounded, size: 15, color: Colors.white),
+                  SizedBox(width: 4),
+                  Text('Applied',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700)),
+                ]),
+              ),
+            ),
+            Positioned(
+              left: 18,
+              right: 18,
+              bottom: 16,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('CURRENT THEME',
+                            style: TextStyle(
+                                color: theme.accent,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1.2)),
+                        const SizedBox(height: 3),
+                        Text(theme.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.w800)),
+                        const SizedBox(height: 2),
+                        Text(theme.description,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.82),
+                                fontSize: 12.5)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  FilledButton.tonalIcon(
+                    onPressed: onPreview,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.white.withValues(alpha: 0.18),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    ),
+                    icon: const Icon(Icons.fullscreen, size: 18),
+                    label: const Text('Preview'),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A tap-to-apply wallpaper tile.
+class _ThemeTile extends StatelessWidget {
+  final ThemeModel theme;
   final int index;
   final VoidCallback onApply;
   final VoidCallback onPreview;
-  const _ThemeCard({
+  const _ThemeTile({
     required this.theme,
-    required this.selected,
     required this.index,
     required this.onApply,
     required this.onPreview,
   });
 
   @override
-  State<_ThemeCard> createState() => _ThemeCardState();
-}
-
-class _ThemeCardState extends State<_ThemeCard> {
-  double _opacity = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    // Staggered fade-in as the grid builds.
-    Future.delayed(Duration(milliseconds: 40 * (widget.index % 8)), () {
-      if (mounted) setState(() => _opacity = 1);
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final t = widget.theme;
-    return AnimatedOpacity(
-      opacity: _opacity,
-      duration: const Duration(milliseconds: 300),
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: Duration(milliseconds: 260 + 30 * (index % 6)),
       curve: Curves.easeOut,
-      child: AnimatedSlide(
-        offset: Offset(0, _opacity == 1 ? 0 : 0.05),
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOutCubic,
-        child: Container(
-          decoration: BoxDecoration(
-            color: scheme.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(
-              color: widget.selected ? t.accent : scheme.outlineVariant.withValues(alpha: 0.5),
-              width: widget.selected ? 2 : 1,
-            ),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+      builder: (context, v, child) => Opacity(
+        opacity: v,
+        child: Transform.translate(offset: Offset(0, (1 - v) * 10), child: child),
+      ),
+      child: GestureDetector(
+        onTap: onApply,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(18),
+          child: Stack(
+            fit: StackFit.expand,
             children: [
-              // Preview area (tap to open full preview).
-              Expanded(
+              _themeBackground(theme),
+              const Positioned.fill(child: _scrim),
+              // Preview affordance.
+              Positioned(
+                top: 8,
+                right: 8,
                 child: GestureDetector(
-                  onTap: widget.onPreview,
-                  child: Stack(
-                    children: [
-                      Positioned.fill(
-                        child: Container(
-                          color: Colors.black.withValues(alpha: 0.15),
-                          padding: const EdgeInsets.all(12),
-                          child: Center(
-                            child: ThemeMock(
-                              theme: t,
-                              width: 160,
-                              height: 150,
-                              compact: true,
-                              imageAsset: WallpaperPacks.preview(t.assetPack),
-                            ),
-                          ),
-                        ),
-                      ),
-                      if (widget.selected)
-                        Positioned(
-                          top: 8,
-                          right: 8,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: t.accent,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.check, size: 14, color: Colors.white),
-                          ),
-                        ),
-                    ],
+                  onTap: onPreview,
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.35),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.fullscreen, size: 16, color: Colors.white),
                   ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+              Positioned(
+                left: 12,
+                right: 12,
+                bottom: 11,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(t.name,
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            )),
+                    Text(theme.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700)),
                     const SizedBox(height: 2),
-                    Text(
-                      t.description,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: scheme.onSurfaceVariant,
-                          ),
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: widget.onPreview,
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              minimumSize: const Size(0, 36),
-                            ),
-                            child: const Text('Preview'),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: FilledButton(
-                            onPressed: widget.selected ? null : widget.onApply,
-                            style: FilledButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              minimumSize: const Size(0, 36),
-                            ),
-                            child: Text(widget.selected ? 'Applied' : 'Apply'),
-                          ),
-                        ),
-                      ],
-                    ),
+                    Text('Tap to apply',
+                        style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.72),
+                            fontSize: 11)),
                   ],
                 ),
               ),
