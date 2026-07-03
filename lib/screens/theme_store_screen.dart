@@ -6,7 +6,6 @@ import '../providers/community_providers.dart';
 import '../providers/providers.dart';
 import '../theme/theme_catalog.dart';
 import '../theme/theme_model.dart';
-import '../theme/wallpaper_packs.dart';
 import 'theme_preview_screen.dart';
 
 /// Wallpaper-forward theme picker. The active pack sits in a large featured
@@ -111,14 +110,19 @@ class ThemeStoreScreen extends ConsumerWidget {
   }
 }
 
-/// Background: the pack's preview wallpaper, or its gradient if art is absent.
+/// Background: a vibrant swatch built from the pack's own colors, so each theme
+/// reads as a distinct, premium tile (was a photo wallpaper; now color-only).
 Widget _themeBackground(ThemeModel theme) {
-  final img = WallpaperPacks.preview(theme.assetPack);
-  final fallback = DecoratedBox(
-    decoration: BoxDecoration(gradient: theme.background.linearGradient),
+  return DecoratedBox(
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [theme.primary, theme.secondary, theme.background.bottom],
+        stops: const [0.0, 0.5, 1.0],
+      ),
+    ),
   );
-  if (img == null) return fallback;
-  return Image.asset(img, fit: BoxFit.cover, errorBuilder: (_, __, ___) => fallback);
 }
 
 const _scrim = DecoratedBox(
