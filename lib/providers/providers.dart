@@ -28,14 +28,10 @@ final secondClockProvider = StreamProvider.autoDispose<DateTime>((ref) async* {
 /// App theme mode. Defaults to following the system; toggled from the UI.
 final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.system);
 
-/// The selected theme pack id, sourced from persisted [AppPrefs] and updated
-/// when the user applies a pack from the Theme Store.
-final selectedThemeIdProvider =
-    Provider<String>((ref) => ref.watch(appPrefsProvider).themeId);
-
-/// The resolved active [ThemeModel] every render target reads from.
+/// The active [ThemeModel] every render target reads from. The in-app theme
+/// picker was removed, so the app always uses the default look.
 final activeThemeProvider =
-    Provider<ThemeModel>((ref) => themeById(ref.watch(selectedThemeIdProvider)));
+    Provider<ThemeModel>((ref) => themeById(kDefaultThemeId));
 
 /// Whether the weekly grid includes Saturday's later activities expanded.
 final showSundayProvider = StateProvider<bool>((ref) => false);
