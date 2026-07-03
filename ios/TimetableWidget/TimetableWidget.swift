@@ -2,7 +2,7 @@ import WidgetKit
 import SwiftUI
 
 // Must match HomeWidgetService.iOSAppGroupId in the Flutter app.
-private let appGroupId = "group.com.example.timetable"
+private let appGroupId = "group.com.dhruvash148.timetable"
 
 /// One snapshot of the rendered widget images shared from the Flutter app via
 /// the App Group's UserDefaults (written by `home_widget`'s renderFlutterWidget).

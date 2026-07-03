@@ -35,7 +35,7 @@ const TimetableDocEntitySchema = CollectionSchema(
   getId: _timetableDocEntityGetId,
   getLinks: _timetableDocEntityGetLinks,
   attach: _timetableDocEntityAttach,
-  version: '3.1.0+1',
+  version: '3.3.2',
 );
 
 int _timetableDocEntityEstimateSize(
@@ -544,7 +544,7 @@ const CommunityTimetableEntitySchema = CollectionSchema(
   getId: _communityTimetableEntityGetId,
   getLinks: _communityTimetableEntityGetLinks,
   attach: _communityTimetableEntityAttach,
-  version: '3.1.0+1',
+  version: '3.3.2',
 );
 
 int _communityTimetableEntityEstimateSize(
@@ -2707,7 +2707,7 @@ const AppPrefsEntitySchema = CollectionSchema(
   getId: _appPrefsEntityGetId,
   getLinks: _appPrefsEntityGetLinks,
   attach: _appPrefsEntityAttach,
-  version: '3.1.0+1',
+  version: '3.3.2',
 );
 
 int _appPrefsEntityEstimateSize(

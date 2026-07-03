@@ -19,7 +19,7 @@ import '../widgets/weather/weather_style.dart';
 class HomeWidgetService {
   HomeWidgetService._();
 
-  static const iOSAppGroupId = 'group.com.example.timetable';
+  static const iOSAppGroupId = 'group.com.dhruvash148.timetable';
   static const _androidProviders = [
     'com.example.timetable.TimetableWidgetSmall',
     'com.example.timetable.TimetableWidgetMedium',
