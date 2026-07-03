@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'settings_screen.dart';
 import 'subjects_screen.dart';
 import 'today_screen.dart';
 import 'week_screen.dart';
@@ -24,6 +25,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     TodayScreen(),
     WeekScreen(),
     SubjectsScreen(),
+    SettingsScreen(),
   ];
 
   @override
@@ -48,6 +50,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             icon: Icon(Icons.palette_outlined),
             selectedIcon: Icon(Icons.palette),
             label: 'Subjects',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.tune_outlined),
+            selectedIcon: Icon(Icons.tune),
+            label: 'Schedule',
           ),
         ],
       ),

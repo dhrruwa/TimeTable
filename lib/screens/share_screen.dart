@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../widgets/dhrruwa_footer.dart';
 
 import '../data/community_repository.dart';
+import '../data/supabase_community_repository.dart';
 import '../logic/share_codec.dart';
 import '../models/period_models.dart';
 import '../providers/community_providers.dart';
@@ -132,9 +133,15 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
       _toast('Add university, branch, semester & section first');
       return;
     }
-    await ref.read(communityRepositoryProvider).publish(tt);
-    _toast('Published to community');
-    setState(() {});
+    try {
+      await ref.read(communityRepositoryProvider).publish(tt);
+      _toast('Published to community');
+      if (mounted) setState(() {});
+    } catch (e) {
+      _toast(e is CommunityException
+          ? e.message
+          : "Couldn't publish. Check your connection and try again.");
+    }
   }
 
   Future<void> _suggestOrReport(String matchKey, bool report) async {

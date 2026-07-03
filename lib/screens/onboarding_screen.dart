@@ -79,9 +79,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
     await notifier.setMeta(meta);
     if (meta.isComplete) {
-      await ref.read(communityRepositoryProvider).publish(
-            ref.read(timetableProvider),
-          );
+      // Best-effort: a failed publish (e.g. offline) must not block onboarding;
+      // the timetable is saved locally and can be re-published later.
+      try {
+        await ref.read(communityRepositoryProvider).publish(
+              ref.read(timetableProvider),
+            );
+      } catch (_) {/* ignore — continue into the app */}
     }
     await ref.read(appPrefsProvider.notifier).markOnboarded();
   }

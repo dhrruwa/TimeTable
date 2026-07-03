@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/timetable_import_service.dart';
 import '../theme/theme_catalog.dart';
 import '../theme/theme_model.dart';
-import 'community_providers.dart';
 
 /// Ticks once a minute (and immediately on subscribe) so "now / next / %" UI
 /// stays current without the user refreshing.

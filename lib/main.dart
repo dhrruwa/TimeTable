@@ -6,8 +6,9 @@ import 'package:uuid/uuid.dart';
 import 'data/app_prefs_repository.dart';
 import 'data/community_repository.dart';
 import 'data/period_repository.dart';
-import 'data/sample_community.dart';
-import 'data/sample_week.dart';
+import 'data/supabase_community_repository.dart';
+import 'data/supabase_config.dart';
+import 'models/period_models.dart';
 import 'providers/community_providers.dart';
 import 'providers/providers.dart';
 import 'providers/widget_providers.dart';
@@ -33,11 +34,18 @@ Future<void> main() async {
   final dir = await getApplicationDocumentsDirectory();
   final isar = await IsarPeriodRepository.open(directory: dir.path);
   final repository = IsarPeriodRepository(isar);
-  final community = IsarCommunityRepository(isar);
   final prefsRepo = IsarAppPrefsRepository(isar);
 
-  // Seed the community DB so discovery has something to find on first run.
-  await seedCommunityIfEmpty(isar);
+  // Community backend: the real, shared Supabase store when configured (so
+  // discovery/publish/join work across users & devices), else the local Isar
+  // mock as an offline fallback.
+  final CommunityRepository community = SupabaseConfig.isConfigured
+      ? SupabaseCommunityRepository(
+          baseUrl: SupabaseConfig.url, anonKey: SupabaseConfig.anonKey)
+      : IsarCommunityRepository(isar);
+
+  // No fake/seed community timetables — discovery is populated only by real
+  // users publishing their own timetables once the app is live.
 
   // Device identity (stable creator id) + onboarding state.
   var prefs = await prefsRepo.load();
@@ -46,10 +54,11 @@ Future<void> main() async {
     await prefsRepo.save(prefs);
   }
 
-  // Load the timetable; seed a starter one on first launch.
+  // Load the timetable; start with an empty one on first launch so new users
+  // build/import their own via onboarding instead of seeing fake demo data.
   var timetable = await repository.load();
   if (timetable == null) {
-    timetable = buildSampleTimetable();
+    timetable = const Timetable();
     await repository.save(timetable);
   }
 
