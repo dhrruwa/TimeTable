@@ -35,6 +35,12 @@ class ShareCodec {
     return '$webHost/t#d=$payload';
   }
 
+  // A genuine timetable link is a few KB. These caps stop a malicious "share
+  // link"/QR from being a base64+gzip decompression bomb that OOM-crashes the
+  // app: the encoded payload is bounded, and inflation aborts past a ceiling.
+  static const _maxPayloadChars = 64 * 1024; // base64 in the URL/QR
+  static const _maxDecodedBytes = 512 * 1024; // inflated JSON ceiling
+
   /// Tries to extract a [Timetable] from any shared string (full URL, custom
   /// scheme, or a bare payload). Returns null if it isn't a timetable link.
   /// Accepts both the compact (v2) and the legacy full-JSON payloads.
@@ -42,9 +48,11 @@ class ShareCodec {
     try {
       final payload = _extractPayload(input.trim());
       if (payload == null || payload.isEmpty) return null;
+      if (payload.length > _maxPayloadChars) return null; // reject oversize
       final normalized = _restorePadding(payload);
       final gz = base64Url.decode(normalized);
-      final json = utf8.decode(GZipCodec().decode(gz));
+      if (gz.length > _maxPayloadChars) return null;
+      final json = utf8.decode(_gunzipBounded(gz, _maxDecodedBytes));
       final obj = jsonDecode(json);
       if (obj is Map && obj['v'] == 2) {
         return _fromCompact(obj.cast<String, dynamic>());
@@ -54,6 +62,16 @@ class ShareCodec {
     } catch (_) {
       return null;
     }
+  }
+
+  /// Gunzip that streams output through a hard byte cap, so a decompression
+  /// bomb throws (and is caught above) long before it can exhaust memory.
+  static List<int> _gunzipBounded(List<int> gz, int maxBytes) {
+    final sink = _BoundedBytesSink(maxBytes);
+    final input = gzip.decoder.startChunkedConversion(sink);
+    input.add(gz);
+    input.close();
+    return sink.bytes;
   }
 
   /// True if the string looks like one of our share links.
@@ -204,4 +222,25 @@ class ShareCodec {
     if (mod == 0) return s;
     return s + ('=' * (4 - mod));
   }
+}
+
+/// Accumulates decoder output but throws once it exceeds [_max] bytes — the
+/// guard that makes gzip inflation bomb-safe.
+class _BoundedBytesSink implements Sink<List<int>> {
+  final int _max;
+  final List<int> _out = [];
+  _BoundedBytesSink(this._max);
+
+  @override
+  void add(List<int> data) {
+    if (_out.length + data.length > _max) {
+      throw const FormatException('payload exceeds maximum size');
+    }
+    _out.addAll(data);
+  }
+
+  @override
+  void close() {}
+
+  List<int> get bytes => _out;
 }

@@ -1,13 +1,30 @@
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
+import { rateLimit, clientIp, isValidEmail, escapeHtml, clampText } from '@/lib/security';
 
 export async function POST(request: Request) {
   try {
-    const { name, email, message } = await request.json();
-
-    if (!name || !email || !message) {
-      return NextResponse.json({ success: false, message: 'Name, email, and message are required.' }, { status: 400 });
+    // Rate limit: 5 requests / 10 min per IP — stops spam/email-bombing.
+    if (!rateLimit(`support:${clientIp(request)}`, 5, 10 * 60 * 1000)) {
+      return NextResponse.json(
+        { success: false, message: 'Too many requests. Please try again later.' },
+        { status: 429 },
+      );
     }
+
+    const body = await request.json();
+    const email = body?.email;
+    const name = clampText(body?.name, 100).trim();
+    const message = clampText(body?.message, 2000).trim();
+
+    if (!name || !message || !isValidEmail(email)) {
+      return NextResponse.json({ success: false, message: 'A valid name, email, and message are required.' }, { status: 400 });
+    }
+
+    // Escaped copies for safe interpolation into the HTML email body.
+    const nameH = escapeHtml(name);
+    const emailH = escapeHtml(email);
+    const messageH = escapeHtml(message);
 
     // SMTP Configuration from env
     const smtpHost = process.env.SMTP_HOST || '';
