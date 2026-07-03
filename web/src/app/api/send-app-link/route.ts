@@ -1,13 +1,25 @@
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
+import { rateLimit, clientIp, isValidEmail, escapeHtml, clampText } from '@/lib/security';
 
 export async function POST(request: Request) {
   try {
-    const { name, email } = await request.json();
-
-    if (!name || !email) {
-      return NextResponse.json({ success: false, message: 'Name and email are required.' }, { status: 400 });
+    // Rate limit: 5 requests / 10 min per IP — stops spam/email-bombing.
+    if (!rateLimit(`applink:${clientIp(request)}`, 5, 10 * 60 * 1000)) {
+      return NextResponse.json(
+        { success: false, message: 'Too many requests. Please try again later.' },
+        { status: 429 },
+      );
     }
+
+    const body = await request.json();
+    const email = body?.email;
+    const name = clampText(body?.name, 100).trim();
+
+    if (!name || !isValidEmail(email)) {
+      return NextResponse.json({ success: false, message: 'A valid name and email are required.' }, { status: 400 });
+    }
+    const nameH = escapeHtml(name);
 
     // SMTP Configuration from env
     const smtpHost = process.env.SMTP_HOST || '';
@@ -41,7 +53,7 @@ export async function POST(request: Request) {
               <p style="color: #64748b; font-size: 14px; margin: 5px 0 0 0; font-weight: 600;">Early Access Registration</p>
             </div>
             <hr style="border: 0; border-top: 1px solid #e2e8f0; margin-bottom: 25px;" />
-            <p style="font-size: 15px; line-height: 1.6;">Hi <strong>${name}</strong>,</p>
+            <p style="font-size: 15px; line-height: 1.6;">Hi <strong>${nameH}</strong>,</p>
             
             <div style="background-color: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; margin: 25px 0;">
               <h4 style="margin: 0 0 10px 0; color: #10b981; font-size: 16px; font-weight: 700;">🚀 Registered Successfully!</h4>

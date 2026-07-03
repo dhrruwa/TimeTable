@@ -59,15 +59,15 @@ export async function POST(request: Request) {
               <p style="color: #64748b; font-size: 14px; margin: 5px 0 0 0; font-weight: 600;">We've received your query</p>
             </div>
             <hr style="border: 0; border-top: 1px solid #e2e8f0; margin-bottom: 25px;" />
-            <p style="font-size: 15px; line-height: 1.6;">Hi <strong>${name}</strong>,</p>
+            <p style="font-size: 15px; line-height: 1.6;">Hi <strong>${nameH}</strong>,</p>
             <p style="font-size: 15px; line-height: 1.6;">Thank you for reaching out to <strong>ClassSync support</strong>. We have successfully logged your query and our team will reply to this email thread shortly.</p>
-            
+
             <div style="background-color: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; margin: 25px 0;">
               <h4 style="margin: 0 0 10px 0; color: #0f172a; font-size: 14px; font-weight: 700; border-b: 1px solid #e2e8f0; padding-bottom: 5px;">📝 Message Summary</h4>
-              <p style="margin: 5px 0; font-size: 13px; color: #475569;"><strong>Name:</strong> ${name}</p>
-              <p style="margin: 5px 0; font-size: 13px; color: #475569;"><strong>Email:</strong> ${email}</p>
+              <p style="margin: 5px 0; font-size: 13px; color: #475569;"><strong>Name:</strong> ${nameH}</p>
+              <p style="margin: 5px 0; font-size: 13px; color: #475569;"><strong>Email:</strong> ${emailH}</p>
               <div style="margin: 15px 0 5px 0; padding: 10px; background-color: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 13px; color: #334155; white-space: pre-wrap; font-style: italic;">
-                "${message}"
+                "${messageH}"
               </div>
             </div>
             
