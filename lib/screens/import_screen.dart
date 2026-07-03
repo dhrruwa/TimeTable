@@ -6,6 +6,7 @@ import '../models/period_models.dart';
 import '../providers/community_providers.dart';
 import '../providers/widget_providers.dart';
 import '../widgets/dhrruwa_footer.dart';
+import '../widgets/legal_links.dart';
 import '../widgets/timetable_summary.dart';
 
 /// Shown when a shared link (or a community pick) is opened: previews the
@@ -57,11 +58,61 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     );
   }
 
+  Future<void> _reportOrBlock() async {
+    final key = widget.incoming.meta.matchKey;
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.flag_outlined),
+              title: const Text('Report this timetable'),
+              subtitle: const Text('Flag incorrect or objectionable content'),
+              onTap: () => Navigator.pop(ctx, 'report'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.block),
+              title: const Text('Block & hide'),
+              subtitle: const Text('Hide this from your discovery'),
+              onTap: () => Navigator.pop(ctx, 'block'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (choice == null || !mounted) return;
+    final repo = ref.read(communityRepositoryProvider);
+    if (choice == 'report') {
+      repo.report(key, 'reported from preview').ignore();
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Reported — thanks. Our team will review it.')));
+    } else {
+      await ref.read(appPrefsProvider.notifier).blockKey(key);
+      repo.report(key, 'blocked by user').ignore();
+      if (!mounted) return;
+      Navigator.of(context).maybePop();
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Blocked — you won't see this again.")));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final incoming = widget.incoming;
     return Scaffold(
-      appBar: AppBar(title: const Text('Shared timetable')),
+      appBar: AppBar(
+        title: const Text('Shared timetable'),
+        actions: [
+          if (incoming.meta.isComplete)
+            IconButton(
+              icon: const Icon(Icons.flag_outlined),
+              tooltip: 'Report or block',
+              onPressed: _reportOrBlock,
+            ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
         children: [
@@ -82,6 +133,9 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
           Text('Subjects', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 12),
           SubjectFacultyList(timetable: incoming),
+          const SizedBox(height: 8),
+          const LegalLinks(
+              lead: 'Community timetables are user-submitted. By using them you agree to our'),
           const DhrruwaFooter(),
         ],
       ),

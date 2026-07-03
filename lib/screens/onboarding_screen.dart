@@ -6,6 +6,7 @@ import '../models/period_models.dart';
 import '../providers/community_providers.dart';
 import '../providers/widget_providers.dart';
 import '../widgets/dhrruwa_footer.dart';
+import '../widgets/legal_links.dart';
 import 'import_screen.dart';
 
 /// First-launch discovery: ask university / branch / semester / section, search
@@ -160,6 +161,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             const SizedBox(height: 18),
             _createNewButton(filled: _exact == null),
           ],
+          const SizedBox(height: 8),
+          const LegalLinks(),
           const DhrruwaFooter(),
         ],
       ),
