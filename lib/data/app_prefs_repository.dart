@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:isar_community/isar.dart';
 
 import 'isar_entities.dart';
@@ -11,17 +13,28 @@ class AppPrefs {
   /// Id of the selected theme pack (see `lib/theme/theme_catalog.dart`).
   final String themeId;
 
+  /// Community `matchKey`s the user has blocked/hidden — filtered out of
+  /// discovery so objectionable/unwanted class listings disappear for them.
+  final List<String> blockedKeys;
+
   const AppPrefs({
     required this.deviceId,
     this.onboarded = false,
     this.themeId = 'liquid_glass',
+    this.blockedKeys = const [],
   });
 
-  AppPrefs copyWith({String? deviceId, bool? onboarded, String? themeId}) =>
+  AppPrefs copyWith({
+    String? deviceId,
+    bool? onboarded,
+    String? themeId,
+    List<String>? blockedKeys,
+  }) =>
       AppPrefs(
         deviceId: deviceId ?? this.deviceId,
         onboarded: onboarded ?? this.onboarded,
         themeId: themeId ?? this.themeId,
+        blockedKeys: blockedKeys ?? this.blockedKeys,
       );
 }
 
@@ -38,10 +51,16 @@ class IsarAppPrefsRepository implements AppPrefsRepository {
   Future<AppPrefs?> load() async {
     final e = await isar.appPrefsEntitys.get(0);
     if (e == null) return null;
+    List<String> blocked = const [];
+    try {
+      final decoded = jsonDecode(e.blockedKeysJson);
+      if (decoded is List) blocked = decoded.map((v) => v.toString()).toList();
+    } catch (_) {/* keep empty on malformed */}
     return AppPrefs(
       deviceId: e.deviceId,
       onboarded: e.onboarded,
       themeId: e.themeId,
+      blockedKeys: blocked,
     );
   }
 
@@ -53,7 +72,8 @@ class IsarAppPrefsRepository implements AppPrefsRepository {
           ..id = 0
           ..deviceId = prefs.deviceId
           ..onboarded = prefs.onboarded
-          ..themeId = prefs.themeId,
+          ..themeId = prefs.themeId
+          ..blockedKeysJson = jsonEncode(prefs.blockedKeys),
       );
     });
   }

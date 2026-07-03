@@ -2680,18 +2680,23 @@ const AppPrefsEntitySchema = CollectionSchema(
   name: r'AppPrefsEntity',
   id: -6704509916744498669,
   properties: {
-    r'deviceId': PropertySchema(
+    r'blockedKeysJson': PropertySchema(
       id: 0,
+      name: r'blockedKeysJson',
+      type: IsarType.string,
+    ),
+    r'deviceId': PropertySchema(
+      id: 1,
       name: r'deviceId',
       type: IsarType.string,
     ),
     r'onboarded': PropertySchema(
-      id: 1,
+      id: 2,
       name: r'onboarded',
       type: IsarType.bool,
     ),
     r'themeId': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'themeId',
       type: IsarType.string,
     )
@@ -2716,6 +2721,7 @@ int _appPrefsEntityEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  bytesCount += 3 + object.blockedKeysJson.length * 3;
   bytesCount += 3 + object.deviceId.length * 3;
   bytesCount += 3 + object.themeId.length * 3;
   return bytesCount;
@@ -2727,9 +2733,10 @@ void _appPrefsEntitySerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeString(offsets[0], object.deviceId);
-  writer.writeBool(offsets[1], object.onboarded);
-  writer.writeString(offsets[2], object.themeId);
+  writer.writeString(offsets[0], object.blockedKeysJson);
+  writer.writeString(offsets[1], object.deviceId);
+  writer.writeBool(offsets[2], object.onboarded);
+  writer.writeString(offsets[3], object.themeId);
 }
 
 AppPrefsEntity _appPrefsEntityDeserialize(
@@ -2739,10 +2746,11 @@ AppPrefsEntity _appPrefsEntityDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = AppPrefsEntity();
-  object.deviceId = reader.readString(offsets[0]);
+  object.blockedKeysJson = reader.readString(offsets[0]);
+  object.deviceId = reader.readString(offsets[1]);
   object.id = id;
-  object.onboarded = reader.readBool(offsets[1]);
-  object.themeId = reader.readString(offsets[2]);
+  object.onboarded = reader.readBool(offsets[2]);
+  object.themeId = reader.readString(offsets[3]);
   return object;
 }
 
@@ -2756,8 +2764,10 @@ P _appPrefsEntityDeserializeProp<P>(
     case 0:
       return (reader.readString(offset)) as P;
     case 1:
-      return (reader.readBool(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 2:
+      return (reader.readBool(offset)) as P;
+    case 3:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -2860,6 +2870,142 @@ extension AppPrefsEntityQueryWhere
 
 extension AppPrefsEntityQueryFilter
     on QueryBuilder<AppPrefsEntity, AppPrefsEntity, QFilterCondition> {
+  QueryBuilder<AppPrefsEntity, AppPrefsEntity, QAfterFilterCondition>
+      blockedKeysJsonEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'blockedKeysJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppPrefsEntity, AppPrefsEntity, QAfterFilterCondition>
+      blockedKeysJsonGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'blockedKeysJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppPrefsEntity, AppPrefsEntity, QAfterFilterCondition>
+      blockedKeysJsonLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'blockedKeysJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppPrefsEntity, AppPrefsEntity, QAfterFilterCondition>
+      blockedKeysJsonBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'blockedKeysJson',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppPrefsEntity, AppPrefsEntity, QAfterFilterCondition>
+      blockedKeysJsonStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'blockedKeysJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppPrefsEntity, AppPrefsEntity, QAfterFilterCondition>
+      blockedKeysJsonEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'blockedKeysJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppPrefsEntity, AppPrefsEntity, QAfterFilterCondition>
+      blockedKeysJsonContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'blockedKeysJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppPrefsEntity, AppPrefsEntity, QAfterFilterCondition>
+      blockedKeysJsonMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'blockedKeysJson',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppPrefsEntity, AppPrefsEntity, QAfterFilterCondition>
+      blockedKeysJsonIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'blockedKeysJson',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AppPrefsEntity, AppPrefsEntity, QAfterFilterCondition>
+      blockedKeysJsonIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'blockedKeysJson',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<AppPrefsEntity, AppPrefsEntity, QAfterFilterCondition>
       deviceIdEqualTo(
     String value, {
@@ -3206,6 +3352,20 @@ extension AppPrefsEntityQueryLinks
 
 extension AppPrefsEntityQuerySortBy
     on QueryBuilder<AppPrefsEntity, AppPrefsEntity, QSortBy> {
+  QueryBuilder<AppPrefsEntity, AppPrefsEntity, QAfterSortBy>
+      sortByBlockedKeysJson() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'blockedKeysJson', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppPrefsEntity, AppPrefsEntity, QAfterSortBy>
+      sortByBlockedKeysJsonDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'blockedKeysJson', Sort.desc);
+    });
+  }
+
   QueryBuilder<AppPrefsEntity, AppPrefsEntity, QAfterSortBy> sortByDeviceId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'deviceId', Sort.asc);
@@ -3248,6 +3408,20 @@ extension AppPrefsEntityQuerySortBy
 
 extension AppPrefsEntityQuerySortThenBy
     on QueryBuilder<AppPrefsEntity, AppPrefsEntity, QSortThenBy> {
+  QueryBuilder<AppPrefsEntity, AppPrefsEntity, QAfterSortBy>
+      thenByBlockedKeysJson() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'blockedKeysJson', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppPrefsEntity, AppPrefsEntity, QAfterSortBy>
+      thenByBlockedKeysJsonDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'blockedKeysJson', Sort.desc);
+    });
+  }
+
   QueryBuilder<AppPrefsEntity, AppPrefsEntity, QAfterSortBy> thenByDeviceId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'deviceId', Sort.asc);
@@ -3302,6 +3476,14 @@ extension AppPrefsEntityQuerySortThenBy
 
 extension AppPrefsEntityQueryWhereDistinct
     on QueryBuilder<AppPrefsEntity, AppPrefsEntity, QDistinct> {
+  QueryBuilder<AppPrefsEntity, AppPrefsEntity, QDistinct>
+      distinctByBlockedKeysJson({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'blockedKeysJson',
+          caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<AppPrefsEntity, AppPrefsEntity, QDistinct> distinctByDeviceId(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -3329,6 +3511,13 @@ extension AppPrefsEntityQueryProperty
   QueryBuilder<AppPrefsEntity, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<AppPrefsEntity, String, QQueryOperations>
+      blockedKeysJsonProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'blockedKeysJson');
     });
   }
 

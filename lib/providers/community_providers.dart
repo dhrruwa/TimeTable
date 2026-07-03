@@ -38,4 +38,15 @@ class AppPrefsNotifier extends StateNotifier<AppPrefs> {
     state = state.copyWith(themeId: themeId);
     await _repo.save(state);
   }
+
+  /// Whether a community class has been blocked/hidden by this user.
+  bool isBlocked(String matchKey) => state.blockedKeys.contains(matchKey);
+
+  /// Block/hide a community class so it no longer appears in discovery for this
+  /// user. Persists locally and (best-effort) reports it to the backend.
+  Future<void> blockKey(String matchKey) async {
+    if (state.blockedKeys.contains(matchKey)) return;
+    state = state.copyWith(blockedKeys: [...state.blockedKeys, matchKey]);
+    await _repo.save(state);
+  }
 }

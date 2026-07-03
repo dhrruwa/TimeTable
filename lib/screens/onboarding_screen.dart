@@ -54,9 +54,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       branch: _meta.branch,
     );
     if (!mounted) return;
+    // Hide anything this user has blocked from discovery.
+    final blocked = ref.read(appPrefsProvider).blockedKeys.toSet();
+    final visibleExact =
+        exact != null && blocked.contains(exact.meta.matchKey) ? null : exact;
     setState(() {
-      _exact = exact;
-      _others = others.where((e) => e.meta.matchKey != exact?.meta.matchKey).toList();
+      _exact = visibleExact;
+      _others = others
+          .where((e) =>
+              e.meta.matchKey != visibleExact?.meta.matchKey &&
+              !blocked.contains(e.meta.matchKey))
+          .toList();
       _searched = true;
       _searching = false;
     });

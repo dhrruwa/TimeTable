@@ -53,5 +53,8 @@ class AppPrefsEntity {
   bool onboarded = false;
   String themeId = 'liquid_glass';
 
+  /// JSON array of community match keys the user has blocked/hidden.
+  String blockedKeysJson = '[]';
+
   AppPrefsEntity();
 }
