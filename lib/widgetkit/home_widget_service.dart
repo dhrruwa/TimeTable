@@ -9,7 +9,6 @@ import '../logic/today_engine.dart';
 import '../models/period_models.dart';
 import '../theme/theme_catalog.dart';
 import '../theme/theme_model.dart';
-import '../theme/wallpaper_packs.dart';
 import '../widgets/weather/timetable_widget_large.dart';
 import '../widgets/weather/timetable_widget_medium.dart';
 import '../widgets/weather/timetable_widget_small.dart';
@@ -74,12 +73,11 @@ class HomeWidgetService {
     final weekdayFull = _full[(weekday - 1) % 7];
     final date = '${at.day} ${_months[at.month - 1]}';
 
-    // Resolve this pack's wallpaper per size (null → gradient fallback). The
-    // background image *is* the theme when present.
-    final pack = tm.assetPack;
-    final wpSmall = WallpaperPacks.asset(pack, 'small', at);
-    final wpMedium = WallpaperPacks.asset(pack, 'medium', at);
-    final wpLarge = WallpaperPacks.asset(pack, 'large', at);
+    // Widget theming is removed — never use a wallpaper; the widget always
+    // renders the plain default look (gradient fallback).
+    const String? wpSmall = null;
+    const String? wpMedium = null;
+    const String? wpLarge = null;
 
     // Structured data for the NATIVE self-updating Android widget: every day's
     // precomputed timeline. The native widget computes the *current* period from
@@ -127,11 +125,9 @@ class HomeWidgetService {
     await HomeWidget.saveWidgetData<String>(
         'theme_radius', tm.borderRadius.toStringAsFixed(0));
     await HomeWidget.saveWidgetData<String>('theme_progress_ramp', tm.progressRamp.name);
-    // Native Android wallpaper selection: folder + count (Kotlin picks the same
-    // rotating index and loads the bundled asset PNG behind the widget).
-    await HomeWidget.saveWidgetData<String>('theme_asset_pack', tm.assetPack);
-    await HomeWidget.saveWidgetData<String>(
-        'theme_pack_count', WallpaperPacks.count(tm.assetPack).toString());
+    // No wallpaper on the native Android widget — force the plain gradient.
+    await HomeWidget.saveWidgetData<String>('theme_asset_pack', '');
+    await HomeWidget.saveWidgetData<String>('theme_pack_count', '0');
     await HomeWidget.saveWidgetData<String>(
         'theme_label_current', tm.labels.currentClass);
     await HomeWidget.saveWidgetData<String>('theme_label_upnext', tm.labels.upNext);

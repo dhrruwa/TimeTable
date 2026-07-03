@@ -13,7 +13,6 @@ import '../widgets/note_card.dart';
 import '../widgets/period_tile.dart';
 import '../widgets/percent_ring.dart';
 import '../widgets/time_utils.dart';
-import 'settings_screen.dart';
 import 'share_screen.dart';
 
 /// Today: the live current period with a completion %, a contextual note, then
@@ -53,13 +52,6 @@ class TodayScreen extends ConsumerWidget {
             tooltip: 'Share & community',
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const ShareScreen()),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.tune),
-            tooltip: 'Schedule settings',
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const SettingsScreen()),
             ),
           ),
         ],
