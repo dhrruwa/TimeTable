@@ -3,7 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 /// Public legal pages (served by the Next.js site). Update the base if the
 /// production domain differs.
-const String kSiteBase = 'https://dhrruwa.com';
+const String kSiteBase = 'https://classsync.dhrruwa.com';
 const String kTermsUrl = '$kSiteBase/terms';
 const String kPrivacyUrl = '$kSiteBase/privacy';
 
