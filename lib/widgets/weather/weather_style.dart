@@ -181,6 +181,12 @@ class WeatherCard extends StatelessWidget {
   /// [gradient] fill with the image + a bottom-weighted dark scrim.
   final String? imageAsset;
   final double overlayStrength;
+
+  /// Full-bleed mode for the OS home-screen widget PNG: the card fills the whole
+  /// canvas with no self-rounded corners or hairline border, so the image
+  /// reaches every edge and the OS applies its own widget corner mask (no gap /
+  /// background colour showing around the card).
+  final bool fullBleed;
   final Widget child;
 
   const WeatherCard({
@@ -192,6 +198,7 @@ class WeatherCard extends StatelessWidget {
     this.elevated = true,
     this.imageAsset,
     this.overlayStrength = 0.55,
+    this.fullBleed = false,
     required this.child,
   });
 
@@ -205,8 +212,9 @@ class WeatherCard extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: hasImage ? null : gradient,
         color: hasImage ? Colors.black : null,
-        borderRadius: BorderRadius.circular(Wx.radius),
-        border: Wx.hairlineBorder,
+        borderRadius:
+            fullBleed ? BorderRadius.zero : BorderRadius.circular(Wx.radius),
+        border: fullBleed ? null : Wx.hairlineBorder,
         // Two-layer shadow only when elevated. The iOS PNG renders with
         // elevated:false so the OS draws its own widget shadow (no baked halo).
         boxShadow: elevated

@@ -33,11 +33,23 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
   Future<void> _import() async {
     setState(() => _busy = true);
     final tt = widget.incoming;
-    await ref.read(timetableProvider.notifier).replaceWith(tt);
-    if (tt.meta.isComplete) {
-      await ref.read(communityRepositoryProvider).join(tt.meta.matchKey);
+    try {
+      // Local, offline, fast — this is what actually imports the timetable.
+      await ref.read(timetableProvider.notifier).replaceWith(tt);
+      await ref.read(appPrefsProvider.notifier).markOnboarded();
+    } catch (_) {
+      if (mounted) {
+        setState(() => _busy = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Couldn't import. Please try again.")),
+        );
+      }
+      return;
     }
-    await ref.read(appPrefsProvider.notifier).markOnboarded();
+    // Best-effort community join in the background — don't block on the network.
+    if (tt.meta.isComplete) {
+      ref.read(communityRepositoryProvider).join(tt.meta.matchKey).ignore();
+    }
     if (!mounted) return;
     Navigator.of(context).popUntil((r) => r.isFirst);
     ScaffoldMessenger.of(context).showSnackBar(

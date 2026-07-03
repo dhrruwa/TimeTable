@@ -11,11 +11,12 @@ struct TimetableEntry: TimelineEntry {
     let smallPath: String?
     let mediumPath: String?
     let largePath: String?
+    let bgHex: String?
 }
 
 struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> TimetableEntry {
-        TimetableEntry(date: Date(), smallPath: nil, mediumPath: nil, largePath: nil)
+        TimetableEntry(date: Date(), smallPath: nil, mediumPath: nil, largePath: nil, bgHex: nil)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (TimetableEntry) -> Void) {
@@ -36,7 +37,8 @@ struct Provider: TimelineProvider {
             date: Date(),
             smallPath: defaults?.string(forKey: "tt_small"),
             mediumPath: defaults?.string(forKey: "tt_medium"),
-            largePath: defaults?.string(forKey: "tt_large")
+            largePath: defaults?.string(forKey: "tt_large"),
+            bgHex: defaults?.string(forKey: "widget_container_bg")
         )
     }
 }
@@ -53,28 +55,50 @@ struct TimetableWidgetEntryView: View {
         }
     }
 
-    private var background: LinearGradient {
-        LinearGradient(
-            colors: [Color(red: 0.33, green: 0.67, blue: 0.93),
-                     Color(red: 0.18, green: 0.47, blue: 0.80)],
-            startPoint: .top, endPoint: .bottom)
+    // Edge colour behind the card (pushed from Flutter per Light/Dark); shown
+    // only in the placeholder / any AA seam. Falls back to the dark card colour.
+    private var bgColor: Color {
+        Color(hex: entry.bgHex) ?? Color(red: 0.086, green: 0.106, blue: 0.133)
     }
 
-    var body: some View {
-        ZStack {
-            if let path = path, let image = UIImage(contentsOfFile: path) {
-                Image(uiImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-            } else {
+    // The rendered card, scaled to fill the whole widget (the PNG already IS the
+    // full themed design).
+    @ViewBuilder private var fill: some View {
+        if let path = path, let image = UIImage(contentsOfFile: path) {
+            Image(uiImage: image)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+        } else {
+            bgColor.overlay(
                 VStack(spacing: 4) {
                     Image(systemName: "calendar")
                     Text("Open Timetable").font(.caption)
                 }
                 .foregroundColor(.white)
-            }
+            )
         }
-        .widgetBackgroundCompat(background)
+    }
+
+    var body: some View {
+        // Put the card in the widget's CONTAINER BACKGROUND so it fills the whole
+        // widget edge-to-edge. The foreground content area is inset by the system
+        // content margins (iOS 17+); the container background is not — that inset
+        // was the "frame" showing around the card.
+        Color.clear.widgetBackgroundCompat(fill)
+    }
+}
+
+extension Color {
+    /// Parses `#AARRGGBB` / `#RRGGBB` (alpha ignored) into a `Color`.
+    init?(hex: String?) {
+        guard var s = hex else { return nil }
+        if s.hasPrefix("#") { s.removeFirst() }
+        if s.count == 8 { s = String(s.suffix(6)) } // drop leading alpha
+        guard s.count == 6, let v = Int(s, radix: 16) else { return nil }
+        self.init(
+            red: Double((v >> 16) & 0xFF) / 255.0,
+            green: Double((v >> 8) & 0xFF) / 255.0,
+            blue: Double(v & 0xFF) / 255.0)
     }
 }
 

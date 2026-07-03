@@ -31,7 +31,7 @@ class SupabaseCommunityRepository implements CommunityRepository {
   }) : _client = client ?? http.Client();
 
   static const _table = 'community_timetables';
-  static const _timeout = Duration(seconds: 20);
+  static const _timeout = Duration(seconds: 12);
 
   Map<String, String> get _headers => {
         'apikey': anonKey,

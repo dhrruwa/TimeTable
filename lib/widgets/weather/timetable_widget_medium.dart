@@ -14,6 +14,7 @@ class TimetableWidgetMedium extends StatelessWidget {
   final double height;
   final bool elevated;
   final String? backgroundImage;
+  final bool fullBleed;
 
   const TimetableWidgetMedium({
     super.key,
@@ -24,6 +25,7 @@ class TimetableWidgetMedium extends StatelessWidget {
     this.height = 170,
     this.elevated = true,
     this.backgroundImage,
+    this.fullBleed = false,
   });
 
   @override
@@ -35,6 +37,7 @@ class TimetableWidgetMedium extends StatelessWidget {
       width: width,
       height: height,
       elevated: elevated,
+      fullBleed: fullBleed,
       imageAsset: backgroundImage,
       overlayStrength: Wx.active.overlayStrength,
       // In-progress class → live red→yellow→green sweep; otherwise neutral.

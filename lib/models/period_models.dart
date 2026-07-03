@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import '../logic/class_key.dart';
+
 /// Canonical, editable timetable model (pure Dart — no Flutter/Isar).
 ///
 /// One shared source of truth for the whole app: Today, the Week grid, and the
@@ -176,13 +178,14 @@ class TimetableMeta {
         if (section.isNotEmpty) 'Sec $section',
       ].join(' · ');
 
-  /// Stable key for matching identical class timetables.
-  String get matchKey => [
-        university.trim().toLowerCase(),
-        branch.trim().toLowerCase(),
-        semester.trim().toLowerCase(),
-        section.trim().toLowerCase(),
-      ].join('|');
+  /// Stable key for matching identical class timetables — tolerant of spelling /
+  /// abbreviation variants (e.g. "Agri" == "Agricultural Engineering").
+  String get matchKey => classMatchKey(
+        university: university,
+        branch: branch,
+        semester: semester,
+        section: section,
+      );
 
   TimetableMeta copyWith({
     String? university,

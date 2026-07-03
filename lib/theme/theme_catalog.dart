@@ -25,6 +25,42 @@ const List<ThemeModel> kThemePacks = [
 ThemeModel themeById(String id) =>
     kThemePacks.firstWhere((t) => t.id == id, orElse: () => kThemePacks.first);
 
+/// The theme the home-screen widgets should render in for the app's current
+/// appearance. The widgets follow the app's Light/Dark choice: a light variant
+/// of the default look for [Brightness.light], the standard dark look otherwise.
+ThemeModel widgetThemeFor(Brightness brightness) =>
+    brightness == Brightness.light ? _liquidGlassLight : _liquidGlass;
+
+/// Light-appearance counterpart of the default [_liquidGlass] — a soft frosted
+/// light surface with dark text, so the widget matches a light-themed app.
+const _liquidGlassLight = ThemeModel(
+  id: 'liquid_glass_light',
+  assetPack: 'liquid_glass',
+  name: 'Frosted Glass Light',
+  description: 'Light frosted glass — matches a light-themed app.',
+  brightness: Brightness.light,
+  primary: Color(0xFF5965C8),
+  secondary: Color(0xFF8A93E0),
+  accent: Color(0xFF5965C8),
+  onBg: Color(0xFF1B1E27), // dark text on light surface
+  background: BgSpec.gradient(
+    [Color(0xFFF6F8FC), Color(0xFFEDF0F7), Color(0xFFE3E7F1)],
+  ),
+  glass: GlassSpec(
+    blur: true,
+    blurSigma: 18,
+    cardOpacity: 0.92,
+    hairline: Color(0x14000000), // subtle dark hairline
+    topSheen: 0.0, // no white sheen on a light card
+    shadow: [BoxShadow(color: Color(0x14000000), blurRadius: 30, offset: Offset(0, 2))],
+  ),
+  cardStyle: CardStyle.glass,
+  progressRamp: ProgressRamp.redGreen,
+  borderRadius: 26,
+  effect: ThemeEffect.none,
+  labels: ThemeLabels(),
+);
+
 // ── 1. Liquid Glass (default) — must reproduce the original look ──────────────
 const _liquidGlass = ThemeModel(
   id: 'liquid_glass',

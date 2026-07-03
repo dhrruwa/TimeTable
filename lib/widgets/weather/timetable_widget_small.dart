@@ -13,6 +13,7 @@ class TimetableWidgetSmall extends StatelessWidget {
   final double size;
   final bool elevated;
   final String? backgroundImage;
+  final bool fullBleed;
 
   const TimetableWidgetSmall({
     super.key,
@@ -22,6 +23,7 @@ class TimetableWidgetSmall extends StatelessWidget {
     this.size = 170,
     this.elevated = true,
     this.backgroundImage,
+    this.fullBleed = false,
   });
 
   @override
@@ -33,6 +35,7 @@ class TimetableWidgetSmall extends StatelessWidget {
       width: size,
       height: size,
       elevated: elevated,
+      fullBleed: fullBleed,
       imageAsset: backgroundImage,
       overlayStrength: Wx.active.overlayStrength,
       gradient: h.liveProgress != null

@@ -55,8 +55,12 @@ class HomeWidgetService {
   /// the home-screen widgets. [theme] re-skins both the Flutter-rendered PNGs
   /// (iOS + initial Android) and the native Android widget (via theme_* tokens).
   static Future<void> refresh(Timetable timetable,
-      {DateTime? now, ThemeModel? theme}) async {
-    final tm = theme ?? themeById(kDefaultThemeId);
+      {DateTime? now, ThemeModel? theme, Brightness? brightness}) async {
+    // Widgets follow the app's Light/Dark appearance: light frosted variant in
+    // light mode, the standard dark look otherwise.
+    final tm = brightness == Brightness.light
+        ? widgetThemeFor(Brightness.light)
+        : (theme ?? themeById(kDefaultThemeId));
     // The widget trees rasterize off-screen reading Wx.active — set it first so
     // the PNGs bake in the active pack's colors/fonts/labels.
     Wx.active = tm;
@@ -125,6 +129,10 @@ class HomeWidgetService {
     await HomeWidget.saveWidgetData<String>(
         'theme_radius', tm.borderRadius.toStringAsFixed(0));
     await HomeWidget.saveWidgetData<String>('theme_progress_ramp', tm.progressRamp.name);
+    // iOS container background behind the full-bleed PNG — matches the widget's
+    // edge colour so no default (blue) frame shows around it, per Light/Dark.
+    await HomeWidget.saveWidgetData<String>(
+        'widget_container_bg', _hex(tm.background.bottom));
     // No wallpaper on the native Android widget — force the plain gradient.
     await HomeWidget.saveWidgetData<String>('theme_asset_pack', '');
     await HomeWidget.saveWidgetData<String>('theme_pack_count', '0');
@@ -141,6 +149,7 @@ class HomeWidgetService {
           date: date,
           size: 170,
           elevated: false,
+          fullBleed: true,
           backgroundImage: wpSmall,
         )),
         key: _smallKey,
@@ -154,6 +163,7 @@ class HomeWidgetService {
           width: 360,
           height: 170,
           elevated: false,
+          fullBleed: true,
           backgroundImage: wpMedium,
         )),
         key: _mediumKey,
@@ -168,6 +178,7 @@ class HomeWidgetService {
           height: 376,
           elevated: false,
           dense: true,
+          fullBleed: true,
           backgroundImage: wpLarge,
         )),
         key: _largeKey,

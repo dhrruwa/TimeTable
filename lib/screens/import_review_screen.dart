@@ -63,12 +63,23 @@ class _ImportReviewScreenState extends ConsumerState<ImportReviewScreen> {
     final timetable =
         _draft.toTimetable(nowMs: DateTime.now().millisecondsSinceEpoch);
 
-    await ref.read(timetableProvider.notifier).replaceWith(timetable);
-    if (timetable.meta.isComplete) {
-      await ref
-          .read(communityRepositoryProvider)
-          .join(timetable.meta.matchKey);
+    try {
+      // The part that matters — save locally. Fast and fully offline.
+      await ref.read(timetableProvider.notifier).replaceWith(timetable);
+    } catch (_) {
+      if (mounted) {
+        setState(() => _saving = false);
+        _toast("Couldn't save. Please try again.");
+      }
+      return;
     }
+
+    // Register interest in the community entry in the background — never block
+    // the save (or trap the user on a spinner) on a network round-trip.
+    if (timetable.meta.isComplete) {
+      ref.read(communityRepositoryProvider).join(timetable.meta.matchKey).ignore();
+    }
+
     if (!mounted) return;
     Navigator.of(context).popUntil((r) => r.isFirst);
     ScaffoldMessenger.of(context).showSnackBar(

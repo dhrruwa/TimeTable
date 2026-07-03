@@ -3,13 +3,13 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import 'supabase_config.dart';
+
 /// Calls the Supabase Edge Function (`extract-timetable`) which proxies Google
 /// Gemini. The Gemini API key lives ONLY in the function's secret env — never in
-/// this app. The anon key below is the project's PUBLIC key and is safe to ship.
-///
-/// Configure both values at build time, e.g.:
-///   flutter run --dart-define=SUPABASE_URL=https://ocfdldqamonkndutuevd.supabase.co \
-///               --dart-define=SUPABASE_ANON_KEY=eyJhbGciOi...
+/// this app. The URL + publishable key come from [SupabaseConfig] (baked in, so
+/// AI import works in release builds without a build-time flag), and can still
+/// be overridden per-instance for tests.
 class TimetableImportService {
   final http.Client _client;
   final String functionUrl;
@@ -21,16 +21,10 @@ class TimetableImportService {
     String? anonKey,
   })  : _client = client ?? http.Client(),
         functionUrl = functionUrl ?? _defaultFunctionUrl,
-        anonKey = anonKey ?? _defaultAnonKey;
+        anonKey = anonKey ?? SupabaseConfig.anonKey;
 
-  static const _supabaseUrl = String.fromEnvironment(
-    'SUPABASE_URL',
-    defaultValue: 'https://ocfdldqamonkndutuevd.supabase.co',
-  );
-  static const _defaultAnonKey =
-      String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: '');
   static const _defaultFunctionUrl =
-      '$_supabaseUrl/functions/v1/extract-timetable';
+      '${SupabaseConfig.url}/functions/v1/extract-timetable';
 
   /// Sends the file bytes to the Edge Function and returns the parsed timetable
   /// JSON map. Throws an [ImportException] with a user-facing [ImportException.message]
