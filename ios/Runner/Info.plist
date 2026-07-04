@@ -41,6 +41,8 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Scan a friend's QR code to import their class timetable.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Choose a photo of your timetable to import it automatically.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
