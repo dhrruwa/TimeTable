@@ -1,8 +1,17 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+// flutter test uses the block-glyph "Ahem" font by default, so real text must
+// be loaded explicitly or it renders as solid boxes.
+Future<ByteData> _fontData(String path) async {
+  final bytes = await File(path).readAsBytes();
+  return ByteData.view(Uint8List.fromList(bytes).buffer);
+}
 
 // Renders the Play Store feature graphic (1024x500).
 // Run: flutter test test/render_feature_graphic.dart -> play/feature_graphic.png
@@ -46,7 +55,7 @@ void _text(Canvas c, String s, Offset at, double size, FontWeight w, Color col) 
           fontSize: size,
           fontWeight: w,
           letterSpacing: -0.5,
-          fontFamily: 'SF Pro Text'),
+          fontFamily: 'Brand'),
     ),
     textDirection: TextDirection.ltr,
   )..layout();
@@ -55,6 +64,10 @@ void _text(Canvas c, String s, Offset at, double size, FontWeight w, Color col) 
 
 void main() {
   test('render feature graphic', () async {
+    final loader = FontLoader('Brand')
+      ..addFont(_fontData('/System/Library/Fonts/SFNS.ttf'));
+    await loader.load();
+
     final rec = ui.PictureRecorder();
     final c = Canvas(rec);
     c.drawRect(
