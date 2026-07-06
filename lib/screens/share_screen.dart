@@ -9,6 +9,7 @@ import '../widgets/dhrruwa_footer.dart';
 
 import '../data/community_repository.dart';
 import '../data/supabase_community_repository.dart';
+import '../logic/link_shortener.dart';
 import '../logic/share_codec.dart';
 import '../models/period_models.dart';
 import '../providers/community_providers.dart';
@@ -84,7 +85,10 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
 
   Future<void> _share() async {
     final tt = ref.read(timetableProvider);
-    final link = ShareCodec.encode(tt);
+    _toast('Preparing link…');
+    // Share a short link (falls back to the full link if offline).
+    final link = await LinkShortener.shorten(ShareCodec.encode(tt));
+    if (!mounted) return;
     final label = tt.meta.isComplete ? ' (${tt.meta.label})' : '';
     await SharePlus.instance.share(ShareParams(
       subject: 'Class timetable',
@@ -94,19 +98,29 @@ class _ShareScreenState extends ConsumerState<ShareScreen> {
   }
 
   Future<void> _copyLink() async {
-    final link = ShareCodec.encode(ref.read(timetableProvider));
+    _toast('Shortening link…');
+    final link =
+        await LinkShortener.shorten(ShareCodec.encode(ref.read(timetableProvider)));
     await Clipboard.setData(ClipboardData(text: link));
-    _toast('Copied!');
+    if (mounted) _toast('Copied!');
   }
 
-  void _join() {
-    final tt = ShareCodec.tryDecode(_joinController.text.trim());
+  Future<void> _join() async {
+    final raw = _joinController.text.trim();
+    var tt = ShareCodec.tryDecode(raw);
+    if (tt == null && raw.startsWith('http')) {
+      // Might be a shortened link — follow the redirect and decode the target.
+      final resolved = await LinkShortener.resolve(raw);
+      if (resolved != null) tt = ShareCodec.tryDecode(resolved);
+    }
     if (tt == null) {
       _toast("That doesn't look like a timetable link");
       return;
     }
+    final incoming = tt;
+    if (!mounted) return;
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => ImportScreen(incoming: tt)),
+      MaterialPageRoute(builder: (_) => ImportScreen(incoming: incoming)),
     );
   }
 
