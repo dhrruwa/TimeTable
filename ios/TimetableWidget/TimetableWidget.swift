@@ -84,6 +84,8 @@ struct Status {
     let weekdayShort: String
     let weekdayFull: String
     let dateLabel: String
+    let nextDaySlots: [Slot]
+    let nextDayLabel: String
 }
 
 private let shortDays = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
@@ -98,6 +100,20 @@ private func isoWeekday(_ date: Date) -> Int {
 private func minutesOfDay(_ date: Date) -> Int {
     let c = Calendar.current.dateComponents([.hour, .minute], from: date)
     return (c.hour ?? 0) * 60 + (c.minute ?? 0)
+}
+
+/// Walks forward from `wd` (ISO weekday, 1=Mon…7=Sun) to find the next day that
+/// has any classes, returning its slots and a display label ("Tomorrow" for the
+/// immediate next day, else the full weekday name).
+private func nextDayWithClasses(_ data: WidgetData, from wd: Int) -> (slots: [Slot], label: String) {
+    for off in 1...7 {
+        let cand = ((wd - 1 + off) % 7) + 1
+        if let slots = data.slotsByDay[cand], !slots.isEmpty {
+            let label = off == 1 ? "Tomorrow" : fullDays[(cand - 1) % 7]
+            return (slots, label)
+        }
+    }
+    return ([], "")
 }
 
 private func hm(_ minutes: Int) -> String {
@@ -117,10 +133,12 @@ private func computeStatus(_ data: WidgetData, _ date: Date) -> Status {
     let c = Calendar.current.dateComponents([.day, .month], from: date)
     let dateLabel = "\(c.day ?? 1) \(months[((c.month ?? 1) - 1) % 12])"
 
+    let next = nextDayWithClasses(data, from: wd)
     func result(_ mode: Status.Mode, _ cur: Slot?, _ prog: Double) -> Status {
         let up = slots.filter { $0.start >= now && !$0.isBreak }
         return Status(mode: mode, current: cur, progress: prog, upNext: up,
-                      weekday: wd, weekdayShort: short, weekdayFull: full, dateLabel: dateLabel)
+                      weekday: wd, weekdayShort: short, weekdayFull: full, dateLabel: dateLabel,
+                      nextDaySlots: next.slots, nextDayLabel: next.label)
     }
     if slots.isEmpty { return result(.empty, nil, 0) }
     if now < slots.first!.start { return result(.beforeDay, nil, 0) }
@@ -265,14 +283,24 @@ private struct SmallView: View {
                     Text("Starts \(hm(n.start))").font(.system(size: 11)).foregroundColor(data.textSecondary)
                 }
             case .dayOver:
-                Text("All done").font(.system(size: 15, weight: .semibold)).foregroundColor(data.textPrimary)
-                Text("See you tomorrow").font(.system(size: 11)).foregroundColor(data.textSecondary)
+                Text(s.nextDayLabel.isEmpty ? "All done" : s.nextDayLabel)
+                    .font(.system(size: 15, weight: .semibold)).foregroundColor(data.textPrimary)
+                if let n = s.nextDaySlots.first {
+                    Text("Starts \(hm(n.start))").font(.system(size: 11)).foregroundColor(data.textSecondary)
+                } else {
+                    Text("See you tomorrow").font(.system(size: 11)).foregroundColor(data.textSecondary)
+                }
             case .empty:
-                Text("No classes").font(.system(size: 15, weight: .semibold)).foregroundColor(data.textPrimary)
-                Text("Enjoy the day").font(.system(size: 11)).foregroundColor(data.textSecondary)
+                Text(s.nextDayLabel.isEmpty ? "No classes" : s.nextDayLabel)
+                    .font(.system(size: 15, weight: .semibold)).foregroundColor(data.textPrimary)
+                if let n = s.nextDaySlots.first {
+                    Text("Starts \(hm(n.start))").font(.system(size: 11)).foregroundColor(data.textSecondary)
+                } else {
+                    Text("Enjoy the day").font(.system(size: 11)).foregroundColor(data.textSecondary)
+                }
             }
             Spacer(minLength: 6)
-            if let up = s.upNext.first {
+            if let up = (s.mode == .dayOver || s.mode == .empty) ? s.nextDaySlots.first : s.upNext.first {
                 HStack(spacing: 6) {
                     Circle().fill(slotColor(up)).frame(width: 7, height: 7)
                     Text(hm(up.start)).font(.system(size: 10, weight: .semibold)).foregroundColor(data.textSecondary)
@@ -316,12 +344,15 @@ private struct MediumView: View {
             Rectangle().fill(data.hairline).frame(width: 1)
 
             VStack(alignment: .leading, spacing: 6) {
-                Text(data.labelUpNext).font(.system(size: 10, weight: .bold)).tracking(1)
+                let showingNextDay = s.mode == .dayOver || s.mode == .empty
+                let list = showingNextDay ? s.nextDaySlots : s.upNext
+                Text(showingNextDay && !s.nextDayLabel.isEmpty ? s.nextDayLabel.uppercased() : data.labelUpNext)
+                    .font(.system(size: 10, weight: .bold)).tracking(1)
                     .foregroundColor(data.textSecondary)
-                if s.upNext.isEmpty {
+                if list.isEmpty {
                     Text("No more classes").font(.system(size: 12)).foregroundColor(data.textSecondary)
                 } else {
-                    ForEach(Array(s.upNext.prefix(3).enumerated()), id: \.offset) { _, n in
+                    ForEach(Array(list.prefix(3).enumerated()), id: \.offset) { _, n in
                         HStack(spacing: 7) {
                             Circle().fill(slotColor(n)).frame(width: 8, height: 8)
                             Text(hm(n.start)).font(.system(size: 11, weight: .semibold))
@@ -336,12 +367,17 @@ private struct MediumView: View {
         }
     }
     private func title(_ s: Status) -> String {
-        switch s.mode { case .beforeDay: return "Day ahead"; case .dayOver: return "All done"
+        switch s.mode {
+        case .beforeDay: return "Day ahead"
+        case .dayOver: return s.nextDayLabel.isEmpty ? "All done" : s.nextDayLabel
+        case .empty: return s.nextDayLabel.isEmpty ? "No classes" : s.nextDayLabel
         default: return "No classes" } }
     private func subtitle(_ s: Status) -> String {
         switch s.mode {
         case .beforeDay: return s.upNext.first.map { "Starts \(hm($0.start))" } ?? ""
-        case .dayOver: return "See you tomorrow"; default: return "Enjoy the day" } }
+        case .dayOver: return s.nextDaySlots.first.map { "Starts \(hm($0.start))" } ?? "See you tomorrow"
+        case .empty: return s.nextDaySlots.first.map { "Starts \(hm($0.start))" } ?? "Enjoy the day"
+        default: return "Enjoy the day" } }
 }
 
 // Large ---------------------------------------------------------------------
@@ -349,7 +385,8 @@ private struct MediumView: View {
 private struct LargeView: View {
     let s: Status; let data: WidgetData
     var body: some View {
-        let slots = data.slotsByDay[s.weekday] ?? []
+        let showingNextDay = s.mode == .dayOver || s.mode == .empty
+        let slots = showingNextDay ? s.nextDaySlots : (data.slotsByDay[s.weekday] ?? [])
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 1) {
@@ -361,8 +398,13 @@ private struct LargeView: View {
                     .foregroundColor(data.textSecondary).multilineTextAlignment(.trailing)
             }
             Rectangle().fill(data.hairline).frame(height: 1)
+            if showingNextDay && !s.nextDayLabel.isEmpty {
+                Text(s.nextDayLabel.uppercased()).font(.system(size: 11, weight: .bold)).tracking(1)
+                    .foregroundColor(data.textSecondary)
+            }
             if slots.isEmpty {
-                Spacer(); Text("No classes today").font(.system(size: 14)).foregroundColor(data.textSecondary)
+                Spacer(); Text(showingNextDay ? "No classes" : "No classes today")
+                    .font(.system(size: 14)).foregroundColor(data.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .center); Spacer()
             } else {
                 ForEach(Array(slots.prefix(8).enumerated()), id: \.offset) { _, slot in

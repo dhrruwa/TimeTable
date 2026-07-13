@@ -197,11 +197,15 @@ object WidgetRenderer {
         }
 
         if (variant == Variant.LARGE) {
-            fillList(context, v, today, minutes, theme)
+            if (today.isNotEmpty() && minutes < today.last().e) {
+                fillList(context, v, today, minutes, theme, filterPast = true)
+            } else {
+                fillList(context, v, nextDayEntries(days, weekday), minutes, theme, filterPast = false)
+            }
         } else {
             // Compact (small/medium): show the live % complete + the next two
             // classes. These view ids only exist in the compact layout.
-            setCompactExtras(v, today, minutes, nowSec, theme)
+            setCompactExtras(v, today, minutes, nowSec, theme, days, weekday)
         }
 
         mgr.updateAppWidget(id, v)
@@ -311,6 +315,8 @@ object WidgetRenderer {
         minutes: Int,
         nowSec: Int,
         theme: WTheme,
+        days: Map<Int, List<Entry>>,
+        weekday: Int,
     ) {
         v.setTextColor(R.id.w_next, theme.textSecondary)
         v.setTextColor(R.id.w_after, theme.textSecondary)
@@ -332,8 +338,15 @@ object WidgetRenderer {
             v.setViewVisibility(R.id.w_pct, View.GONE)
         }
 
-        val upcoming = today.filter { !it.isBreak && it.s > minutes }
-        setUpcoming(v, R.id.w_next, "Next", upcoming.getOrNull(0))
+        var upcoming = today.filter { !it.isBreak && it.s > minutes }
+        var nextLabel = "Next"
+        if (upcoming.isEmpty()) {
+            // Today's classes are over (or there are none) — fall back to the
+            // next day that has classes so the widget isn't left blank.
+            upcoming = nextDayEntries(days, weekday).filter { !it.isBreak }
+            nextLabel = "Tomorrow"
+        }
+        setUpcoming(v, R.id.w_next, nextLabel, upcoming.getOrNull(0))
         setUpcoming(v, R.id.w_after, "Then", upcoming.getOrNull(1))
     }
 
@@ -408,18 +421,22 @@ object WidgetRenderer {
         }
     }
 
+    /** [filterPast]=true hides classes that have already ended (today's remaining
+     *  list); false shows every class (a future day's full timetable). */
     private fun fillList(
         context: Context,
         v: RemoteViews,
-        today: List<Entry>,
+        entries: List<Entry>,
         minutes: Int,
         theme: WTheme,
+        filterPast: Boolean,
     ) {
         v.removeAllViews(R.id.w_list)
         var p = 0
-        for (e in today) {
+        for (e in entries) {
             if (!e.isBreak) p++
-            if (e.e <= minutes || e.isBreak) continue // list only upcoming classes
+            if (e.isBreak) continue
+            if (filterPast && e.e <= minutes) continue
             val row = RemoteViews(context.packageName, R.layout.widget_native_row)
             row.setTextViewText(R.id.row_p, "P$p")
             row.setTextColor(R.id.row_p, theme.textPrimary)
@@ -429,6 +446,18 @@ object WidgetRenderer {
             row.setTextColor(R.id.row_time, theme.textSecondary)
             v.addView(R.id.w_list, row)
         }
+    }
+
+    /** Entries for the next day (walking forward from tomorrow) that has any
+     *  classes at all, or an empty list if none found within a week. */
+    private fun nextDayEntries(days: Map<Int, List<Entry>>, weekday: Int): List<Entry> {
+        for (off in 1..7) {
+            val wd = ((weekday - 1 + off) % 7) + 1
+            if (wd > 6) continue
+            val list = days[wd]
+            if (!list.isNullOrEmpty()) return list
+        }
+        return emptyList()
     }
 
     private fun nextText(days: Map<Int, List<Entry>>, weekday: Int): String {
